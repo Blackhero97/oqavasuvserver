@@ -1,0 +1,35 @@
+{
+  "name": "school-crm-server",
+  "version": "2.0.0",
+  "description": "School CRM Backend Server with JWT Auth and Hikvision Integration",
+  "main": "index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed:admin": "node seed-admin.js",
+    "test:staff-quick": "node quick-staff-test.mjs",
+    "test:staff-full": "node test-staff-api.mjs",
+    "migrate:specialized": "node migrate-to-specialized-collections.mjs"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.2.0",
+    "mongoose": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1",
+    "xlsx": "^0.18.5",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

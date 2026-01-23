@@ -6,6 +6,7 @@ import connectDB from "./db/connection.js";
 import { startISUPServer, getConnectedDevices } from "./isup-server.js";
 import { initializeSocket } from "./services/socket.service.js";
 import { corsOptions } from "./config/cors.js";
+import { initializeScheduler } from "./services/scheduler.service.js";
 
 // Routes
 import webhookRoutes from "./webhookRoutes.js";
@@ -13,6 +14,7 @@ import authRoutes from "./routes/auth.routes.js";
 import staffRoutes from "./staff-routes.js";
 import studentRoutes from "./student-routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 // Models (for backward compatibility with existing code)
 import Employee from "./models/Employee.js";
@@ -52,14 +54,17 @@ app.use("/webhook", webhookRoutes);
 // Authentication routes (public - no auth required)
 app.use("/api/auth", authRoutes);
 
+// Reports routes (Excel hisobotlar)
+app.use("/api/reports", reportsRoutes);
+
+// Notification routes
+app.use("/api/notifications", notificationRoutes);
+
 // Staff routes (Teachers, Guards, Cooks)
 app.use("/api", staffRoutes);
 
 // Student routes (Students & Classes - new system)
 app.use("/api", studentRoutes);
-
-// Reports routes (Excel hisobotlar)
-app.use("/api/reports", reportsRoutes);
 
 const attendanceStats = {
   totalStudents: 245,
@@ -2084,6 +2089,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
+// Initialize Scheduler for Cron Jobs
+initializeScheduler();
+
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Socket.IO ready for real-time updates`);

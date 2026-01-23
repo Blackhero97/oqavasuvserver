@@ -162,7 +162,7 @@ const teachers = [
 
 // Routes
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "Server is running" });
+  res.json({ status: "OK", message: "Server is running", version: "3.14" });
 });
 
 // Get students from MongoDB (real data) - FALLBACK ENDPOINT

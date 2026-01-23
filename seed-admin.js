@@ -37,14 +37,38 @@ async function createDefaultAdmin() {
 
         await admin.save();
 
-        console.log('🎉 Default admin user yaratildi!');
+        // Create Teacher user
+        const teacher = await User.findOne({ username: 'teacher' });
+        if (!teacher) {
+            await new User({
+                username: 'teacher',
+                password: 'teacher123',
+                email: 'teacher@bmcrm.uz',
+                fullName: 'O\'qituvchi',
+                role: 'teacher'
+            }).save();
+            console.log('🎉 Teacher user yaratildi!');
+        }
+
+        // Create Director user
+        const director = await User.findOne({ username: 'director' });
+        if (!director) {
+            await new User({
+                username: 'director',
+                password: 'director123',
+                email: 'director@bmcrm.uz',
+                fullName: 'Direktor',
+                role: 'admin' // Director as admin for now
+            }).save();
+            console.log('🎉 Director user yaratildi!');
+        }
+
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('Username: admin');
-        console.log('Password: admin123');
-        console.log('Email: admin@bmcrm.uz');
-        console.log('Role: admin');
+        console.log('Default foydalanuvchilar:');
+        console.log('1. admin / admin123');
+        console.log('2. teacher / teacher123');
+        console.log('3. director / director123');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('⚠️  MUHIM: Production\'da parolni o\'zgartiring!');
 
         await mongoose.connection.close();
         console.log('✅ Database connection closed');

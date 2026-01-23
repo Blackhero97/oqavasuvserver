@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendAttendanceReport } from '../services/telegram.service.js';
+import { sendAttendanceReport, sendClassAttendanceReport } from '../services/telegram.service.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -37,6 +37,33 @@ router.post('/telegram/attendance', authenticateToken, async (req, res) => {
         }
     } catch (error) {
         console.error('Error in manual telegram trigger:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * POST /api/notifications/telegram/class-attendance
+ * Manually trigger a Telegram attendance report for a specific class
+ */
+router.post('/telegram/class-attendance', authenticateToken, async (req, res) => {
+    try {
+        const { className } = req.body;
+        if (!className) {
+            return res.status(400).json({ error: 'Sinf nomi kiritilishi shart' });
+        }
+
+        const result = await sendClassAttendanceReport(className);
+
+        if (result.success) {
+            res.json({
+                message: `${className} sinfi davomat hisoboti Telegramga yuborildi`,
+                stats: result
+            });
+        } else {
+            res.status(500).json({ error: result.error || 'Failed to send report' });
+        }
+    } catch (error) {
+        console.error('Error in manual class telegram trigger:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

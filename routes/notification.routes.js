@@ -4,6 +4,8 @@ import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+console.log('✅ Notification routes file loaded');
+
 /**
  * POST /api/notifications/telegram/attendance
  * Manually trigger a Telegram attendance report

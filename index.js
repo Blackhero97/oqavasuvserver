@@ -51,19 +51,24 @@ app.use(express.json());
 // Webhook routes (CLOUD MODE - for Render/Netlify)
 app.use("/webhook", webhookRoutes);
 
-// Authentication routes (public - no auth required)
+// Authentication routes
+console.log("🛠️ Registering /api/auth routes...");
 app.use("/api/auth", authRoutes);
 
-// Reports routes (Excel hisobotlar)
+// Reports routes
+console.log("🛠️ Registering /api/reports routes...");
 app.use("/api/reports", reportsRoutes);
 
 // Notification routes
+console.log("🛠️ Registering /api/notifications routes...");
 app.use("/api/notifications", notificationRoutes);
 
-// Staff routes (Teachers, Guards, Cooks)
+// Staff routes
+console.log("🛠️ Registering /api staff routes...");
 app.use("/api", staffRoutes);
 
-// Student routes (Students & Classes - new system)
+// Student routes
+console.log("🛠️ Registering /api student routes...");
 app.use("/api", studentRoutes);
 
 const attendanceStats = {

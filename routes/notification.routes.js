@@ -7,6 +7,14 @@ const router = express.Router();
 console.log('✅ Notification routes file loaded');
 
 /**
+ * GET /api/notifications/ping
+ * Test end-point
+ */
+router.get('/ping', (req, res) => {
+    res.json({ message: 'Notifications routing works!' });
+});
+
+/**
  * POST /api/notifications/telegram/attendance
  * Manually trigger a Telegram attendance report
  */

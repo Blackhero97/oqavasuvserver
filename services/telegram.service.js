@@ -10,8 +10,26 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 let bot;
 
 if (token) {
-    bot = new TelegramBot(token, { polling: true });
-    console.log('🤖 Telegram Bot initialized');
+    const isProduction = process.env.NODE_ENV === 'production';
+    const webhookUrl = process.env.WEBHOOK_URL;
+
+    if (isProduction && webhookUrl) {
+        // Production: Webhook mode (for Render/Cloud deployment)
+        bot = new TelegramBot(token, { webHook: true });
+        const webhookPath = '/webhook/telegram';
+        bot.setWebHook(`${webhookUrl}${webhookPath}`)
+            .then(() => {
+                console.log('🤖 Telegram Bot initialized (WEBHOOK MODE)');
+                console.log(`📡 Webhook URL: ${webhookUrl}${webhookPath}`);
+            })
+            .catch((err) => {
+                console.error('❌ Failed to set webhook:', err.message);
+            });
+    } else {
+        // Development: Polling mode (for local development)
+        bot = new TelegramBot(token, { polling: true });
+        console.log('🤖 Telegram Bot initialized (POLLING MODE - Development)');
+    }
 
     // Bot started - listen for /start to get chat ID
     bot.onText(/\/start/, (msg) => {

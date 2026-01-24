@@ -62,11 +62,11 @@ router.post("/hikvision", upload.any(), async (req, res) => {
 
     const eventTime = new Date(
       acEvent?.dateTime ||
-        eventData.dateTime ||
-        eventData.time ||
-        eventData.Time ||
-        req.body.time ||
-        new Date()
+      eventData.dateTime ||
+      eventData.time ||
+      eventData.Time ||
+      req.body.time ||
+      new Date()
     );
     const dateStr = eventTime.toISOString().split("T")[0];
     // Convert to Uzbekistan timezone UTC+5
@@ -242,5 +242,32 @@ router.get("/hikvision/status", (req, res) => {
     description: "Receives HTTP notifications from Hikvision device",
   });
 });
+
+/**
+ * Telegram Bot Webhook endpoint
+ * This endpoint receives updates from Telegram servers
+ * Used in production (Render) to avoid polling conflicts
+ */
+router.post("/telegram", async (req, res) => {
+  try {
+    console.log("📨 Telegram webhook received");
+
+    // Import bot instance dynamically to avoid circular dependency
+    const { default: bot } = await import("./services/telegram.service.js");
+
+    if (bot) {
+      bot.processUpdate(req.body);
+      console.log("✅ Telegram update processed");
+    } else {
+      console.warn("⚠️ Telegram bot not initialized");
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("❌ Telegram webhook error:", error);
+    res.sendStatus(500);
+  }
+});
+
 
 export default router;

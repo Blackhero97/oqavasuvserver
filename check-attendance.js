@@ -1,50 +1,39 @@
-// Check attendance records in MongoDB
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import Attendance from './models/Attendance.js';
+import 'dotenv/config';
 
-dotenv.config();
+const MONGODB_URI = 'mongodb+srv://hasanboyleo97_db_user:Mjm88aTbZQFmxMNu@bmcrm.1ieuljj.mongodb.net/attendance_db?retryWrites=true&w=majority';
 
-async function checkAttendance() {
-    try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('✅ Connected to MongoDB\n');
+mongoose.connect(MONGODB_URI)
+    .then(async () => {
+        console.log('✅ MongoDB ulanildi');
+
+        const Attendance = mongoose.model('Attendance', new mongoose.Schema({}, { strict: false }));
 
         const today = new Date().toISOString().split('T')[0];
-        console.log(`📅 Checking attendance for: ${today}\n`);
+        console.log(`📅 Bugungi sana: ${today}`);
 
-        const attendanceRecords = await Attendance.find({ date: today }).sort({ createdAt: -1 });
+        const records = await Attendance.find({ date: today });
+        console.log(`📊 Bugungi davomat: ${records.length} ta`);
 
-        console.log(`📊 Total attendance records today: ${attendanceRecords.length}\n`);
-
-        if (attendanceRecords.length > 0) {
-            console.log('Attendance Records:');
-            attendanceRecords.forEach((record, index) => {
-                console.log(`\n${index + 1}. ${record.name}`);
-                console.log(`   Employee ID: ${record.employeeId}`);
-                console.log(`   Hikvision ID: ${record.hikvisionEmployeeId}`);
-                console.log(`   First Check-in: ${record.firstCheckIn || 'N/A'}`);
-                console.log(`   Last Check-out: ${record.lastCheckOut || 'N/A'}`);
-                console.log(`   Status: ${record.status}`);
-                console.log(`   Events: ${record.events?.length || 0}`);
-                if (record.events && record.events.length > 0) {
-                    record.events.forEach(evt => {
-                        console.log(`     - ${evt.type} at ${evt.time}`);
-                    });
-                }
+        if (records.length > 0) {
+            console.log('\n📋 Birinchi 5 record:');
+            records.slice(0, 5).forEach((r, i) => {
+                console.log(`  ${i + 1}. ${r.name} (${r.role || 'NO_ROLE'}) - Keldi: ${r.firstCheckIn || 'YO\'Q'}`);
             });
         } else {
-            console.log('⚠️  No attendance records found for today!');
-            console.log('Please test Face ID again or check webhook configuration.');
+            console.log('\n⚠️ Bugungi sana uchun hech qanday record topilmadi!');
+
+            // Oxirgi 5 recordni ko'rsatish
+            const latestRecords = await Attendance.find().sort({ _id: -1 }).limit(5);
+            console.log(`\n📋 Oxirgi 5 record (har qanday sana):`);
+            latestRecords.forEach((r, i) => {
+                console.log(`  ${i + 1}. ${r.name} - Sana: ${r.date} - Keldi: ${r.firstCheckIn || 'YO\'Q'}`);
+            });
         }
 
-        await mongoose.disconnect();
         process.exit(0);
-
-    } catch (error) {
-        console.error('❌ Error:', error);
+    })
+    .catch(err => {
+        console.error('❌ Xato:', err.message);
         process.exit(1);
-    }
-}
-
-checkAttendance();
+    });

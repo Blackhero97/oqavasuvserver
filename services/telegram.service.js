@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import Attendance from '../models/Attendance.js';
 import Employee from '../models/Employee.js';
 import Student from '../models/Student.js';
+import TelegramUser from '../models/TelegramUser.js';
 
 dotenv.config();
 
@@ -31,12 +32,104 @@ if (token) {
         console.log('🤖 Telegram Bot initialized (POLLING MODE - Development)');
     }
 
-    // Bot started - listen for /start to get chat ID
-    bot.onText(/\/start/, (msg) => {
+    // Bot started - save user and send welcome message
+    bot.onText(/\/start/, async (msg) => {
         const chatId = msg.chat.id;
-        bot.sendMessage(chatId, `Assalomu alaykum! Bot ishga tushdi. \nSizning Chat ID: ${chatId}\n\nUshbu ID ni .env faylidagi TELEGRAM_CHAT_ID qismiga qo'shib qo'ying.`);
-        console.log(`📩 Telegram Chat ID discovered: ${chatId}`);
+        const user = msg.from;
+
+        try {
+            // Save or update user in database
+            await TelegramUser.findOneAndUpdate(
+                { chatId: chatId.toString() },
+                {
+                    chatId: chatId.toString(),
+                    username: user.username,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    isActive: true,
+                    subscribedAt: new Date()
+                },
+                { upsert: true, new: true }
+            );
+
+            const userName = user.first_name || user.username || 'Foydalanuvchi';
+            bot.sendMessage(chatId,
+                `Assalomu alaykum, ${userName}! 👋\n\n` +
+                `✅ Siz BM Maktab CRM bot'iga obuna bo'ldingiz.\n\n` +
+                `📊 Endi siz maktab hisobotlarini avtomatik olasiz:\n` +
+                `• Davomat hisobotlari\n` +
+                `• E'lonlar va xabarlar\n` +
+                `• Majlis va tadbirlar haqida ma'lumotlar\n\n` +
+                `🔔 Xabarlarni olishni to'xtatish uchun /stop buyrug'ini yuboring.`
+            );
+
+            console.log(`✅ Yangi foydalanuvchi qo'shildi: ${userName} (${chatId})`);
+        } catch (error) {
+            console.error('❌ Error saving telegram user:', error);
+            bot.sendMessage(chatId, `Assalomu alaykum! Bot ishga tushdi.\nSizning Chat ID: ${chatId}`);
+        }
     });
+
+    // Stop command - deactivate user
+    bot.onText(/\/stop/, async (msg) => {
+        const chatId = msg.chat.id;
+
+        try {
+            await TelegramUser.findOneAndUpdate(
+                { chatId: chatId.toString() },
+                { isActive: false }
+            );
+
+            bot.sendMessage(chatId,
+                `❌ Siz bot'dan chiqib ketdingiz.\n\n` +
+                `Qayta obuna bo'lish uchun /start buyrug'ini yuboring.`
+            );
+
+            console.log(`❌ Foydalanuvchi chiqib ketdi: ${chatId}`);
+        } catch (error) {
+            console.error('❌ Error deactivating user:', error);
+        }
+    });
+}
+
+/**
+ * Send message to all active Telegram users
+ * @param {string} message - Message to send
+ * @returns {Promise<{success: boolean, sent: number, failed: number}>}
+ */
+async function broadcastMessage(message) {
+    try {
+        const activeUsers = await TelegramUser.find({ isActive: true });
+        console.log(`📢 Broadcasting to ${activeUsers.length} active users...`);
+
+        let sent = 0;
+        let failed = 0;
+
+        for (const user of activeUsers) {
+            try {
+                await bot.sendMessage(user.chatId, message, { parse_mode: 'Markdown' });
+                sent++;
+            } catch (error) {
+                console.error(`❌ Failed to send to ${user.chatId}:`, error.message);
+                failed++;
+
+                // If user blocked the bot, deactivate them
+                if (error.response && error.response.statusCode === 403) {
+                    await TelegramUser.findOneAndUpdate(
+                        { chatId: user.chatId },
+                        { isActive: false }
+                    );
+                    console.log(`🚫 User ${user.chatId} blocked the bot, deactivated`);
+                }
+            }
+        }
+
+        console.log(`✅ Broadcast complete: ${sent} sent, ${failed} failed`);
+        return { success: true, sent, failed };
+    } catch (error) {
+        console.error('❌ Broadcast error:', error);
+        return { success: false, sent: 0, failed: 0, error: error.message };
+    }
 }
 
 /**
@@ -131,10 +224,10 @@ export const sendAttendanceReport = async (role = 'student') => {
         message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
         message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
-        await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-        console.log(`✅ ${roleLabel} ultra-detailed attendance report sent to Telegram`);
+        const broadcastResult = await broadcastMessage(message);
+        console.log(`✅ ${roleLabel} attendance report broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
 
-        return { success: true, present: presentCount, absent: absentCount, total };
+        return { success: true, present: presentCount, absent: absentCount, total, broadcast: broadcastResult };
     } catch (error) {
         console.error('❌ Error sending Telegram report:', error);
         return { success: false, error: error.message };
@@ -208,8 +301,9 @@ export const sendClassAttendanceReport = async (className) => {
         message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
         message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
-        await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-        return { success: true, present: presentCount, absent: absentCount, total };
+        const broadcastResult = await broadcastMessage(message);
+        console.log(`✅ Class attendance report broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
+        return { success: true, present: presentCount, absent: absentCount, total, broadcast: broadcastResult };
     } catch (error) {
         console.error('❌ Error sending class report:', error);
         return { success: false, error: error.message };

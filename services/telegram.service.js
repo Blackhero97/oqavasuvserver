@@ -216,4 +216,58 @@ export const sendClassAttendanceReport = async (className) => {
     }
 };
 
+/**
+ * Send custom message to Telegram
+ * @param {string} title - Message title
+ * @param {string} message - Message content
+ * @param {string} recipient - Target audience (e.g., "Barcha O'quvchilar", "9-A sinfi")
+ */
+export const sendCustomMessage = async (title, message, recipient = "Barcha") => {
+    try {
+        if (!bot) {
+            console.error('❌ Telegram Bot is not initialized');
+            return { success: false, error: 'Bot not initialized' };
+        }
+
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        if (!chatId) {
+            console.warn('⚠️ TELEGRAM_CHAT_ID is not set');
+            return { success: false, error: 'Chat ID not set' };
+        }
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('uz-UZ', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const timeStr = now.toLocaleTimeString('uz-UZ', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        let telegramMessage = `━━━━━━━━━━━━━━━━━━━━\n`;
+        telegramMessage += `📢 *${title.toUpperCase()}* 📢\n`;
+        telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        telegramMessage += `👥 *Qabul qiluvchi:* ${recipient}\n`;
+        telegramMessage += `📅 *Sana:* ${dateStr}\n`;
+        telegramMessage += `🕐 *Vaqt:* ${timeStr}\n\n`;
+
+        telegramMessage += `──────────────────\n\n`;
+        telegramMessage += `${message}\n\n`;
+        telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
+        telegramMessage += `🤖 *BM CRM Tizimi*`;
+
+        await bot.sendMessage(chatId, telegramMessage, { parse_mode: 'Markdown' });
+        console.log(`✅ Custom message sent to Telegram: "${title}"`);
+
+        return { success: true, title, recipient };
+    } catch (error) {
+        console.error('❌ Error sending custom message:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export default bot;
+

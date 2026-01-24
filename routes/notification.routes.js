@@ -1,5 +1,5 @@
 import express from 'express';
-import { sendAttendanceReport, sendClassAttendanceReport } from '../services/telegram.service.js';
+import { sendAttendanceReport, sendClassAttendanceReport, sendCustomMessage } from '../services/telegram.service.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -81,6 +81,34 @@ router.get('/telegram/status', (req, res) => {
         botConfigured: isConfigured,
         chatIdSet: hasChatId
     });
+});
+
+/**
+ * POST /api/notifications/telegram/custom
+ * Send custom message/announcement to Telegram
+ */
+router.post('/telegram/custom', async (req, res) => {
+    try {
+        const { title, message, recipient } = req.body;
+
+        if (!title || !message) {
+            return res.status(400).json({ error: 'Sarlavha va xabar matni kiritilishi shart' });
+        }
+
+        const result = await sendCustomMessage(title, message, recipient || 'Barcha');
+
+        if (result.success) {
+            res.json({
+                message: 'Xabar Telegramga yuborildi',
+                stats: result
+            });
+        } else {
+            res.status(500).json({ error: result.error || 'Failed to send message' });
+        }
+    } catch (error) {
+        console.error('Error sending custom message:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 export default router;

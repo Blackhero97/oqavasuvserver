@@ -4,51 +4,55 @@ import Class from '../models/Class.js';
 
 export const getReportStats = async (req, res) => {
     try {
+        console.log('📊 [REPORTS API] Request received');
+
         const now = new Date();
         const year = now.getFullYear();
-        const month = now.getMonth(); // 0-11
+        const month = now.getMonth();
         const dayOfMonth = now.getDate();
-
-        // Date strings in YYYY-MM-DD
         const todayStr = now.toISOString().split('T')[0];
+
+        // Core counts
+        const totalStudents = await Student.countDocuments({ status: 'active' });
+
         const startOfMonthStr = new Date(year, month, 1).toISOString().split('T')[0];
         const endOfMonthStr = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
-        // 1. Core Statistics
-        const totalStudents = await Student.countDocuments({ status: 'active' });
-
-        // Monthly records for students
+        // Monthly Student Records
         const monthlyRecords = await Attendance.find({
             date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
             role: 'student'
         });
 
-        // Average Attendance calculation
-        // presentCount = any record that is 'present' or has check-in time
-        const actualPresentCount = monthlyRecords.filter(r =>
+        // Stats calculations
+        const presentRecords = monthlyRecords.filter(r =>
             r.status === 'present' || (r.firstCheckIn && r.firstCheckIn.length > 0)
-        ).length;
+        );
+        const presentCount = presentRecords.length;
 
-        const possibleCount = totalStudents * dayOfMonth;
-        const avgAttendance = possibleCount > 0 ? (actualPresentCount / possibleCount) * 100 : 0;
+        const possibleCount = (totalStudents || 0) * dayOfMonth;
+        const avgAttendance = possibleCount > 0 ? (presentCount / possibleCount) * 100 : 0;
 
-        // Late arrivals calculation (after 08:30)
-        const lateRecords = monthlyRecords.filter(r => {
+        const lateRecords = presentRecords.filter(r => {
             if (!r.firstCheckIn) return false;
-            const [h, m] = r.firstCheckIn.split(':').map(Number);
+            const parts = r.firstCheckIn.split(':');
+            if (parts.length < 2) return false;
+            const h = parseInt(parts[0]);
+            const m = parseInt(parts[1]);
             return (h * 60 + m) > (8 * 60 + 30);
         });
-        const latePercentage = actualPresentCount > 0 ? (lateRecords.length / actualPresentCount) * 100 : 0;
+        const latePercentage = presentCount > 0 ? (lateRecords.length / presentCount) * 100 : 0;
 
-        // 2. Daily Distribution (Pie Chart)
+        // Today Distribution
         const todayRecords = await Attendance.find({ date: todayStr, role: 'student' });
         const presentToday = todayRecords.filter(r => r.status === 'present' || (r.firstCheckIn && r.firstCheckIn.length > 0)).length;
         const lateToday = todayRecords.filter(r => {
             if (!r.firstCheckIn) return false;
-            const [h, m] = r.firstCheckIn.split(':').map(Number);
-            return (h * 60 + m) > (8 * 60 + 30);
+            const p = r.firstCheckIn.split(':');
+            if (p.length < 2) return false;
+            return (parseInt(p[0]) * 60 + parseInt(p[1])) > (8 * 60 + 30);
         }).length;
-        const absentToday = Math.max(0, totalStudents - presentToday);
+        const absentToday = Math.max(0, (totalStudents || 0) - presentToday);
 
         const attendanceDistribution = [
             { name: "Keldi", value: Math.max(0, presentToday - lateToday), color: "#22c55e" },
@@ -56,154 +60,123 @@ export const getReportStats = async (req, res) => {
             { name: "Yo'q", value: absentToday, color: "#ef4444" },
         ];
 
-        // 3. Monthly Trend (Last 10 months)
+        // 3. Last 10 Months Trend
         const monthlyTrend = [];
         const monthNames = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
-
         for (let i = 9; i >= 0; i--) {
-            const mDate = new Date(year, month - i, 1);
-            const mEnd = new Date(year, month - i + 1, 0);
-            const label = monthNames[mDate.getMonth()];
+            const d = new Date(year, month - i, 1);
+            const dLabel = monthNames[d.getMonth()];
+            const sStr = d.toISOString().split('T')[0];
+            const eStr = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
 
-            const mStartStr = mDate.toISOString().split('T')[0];
-            const mEndStr = mEnd.toISOString().split('T')[0];
-
-            const count = await Attendance.countDocuments({
-                date: { $gte: mStartStr, $lte: mEndStr },
+            const mCount = await Attendance.countDocuments({
+                date: { $gte: sStr, $lte: eStr },
                 role: 'student',
-                $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: null, $ne: "" } }]
+                $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
             });
-
-            // Fixed estimate for trend visualization
-            const attendance = totalStudents > 0 ? Math.min(100, (count / (totalStudents * 22)) * 100) : 0;
-            monthlyTrend.push({ month: label, attendance: parseFloat(attendance.toFixed(1)) });
+            const mRate = totalStudents > 0 ? (mCount / (totalStudents * 22)) * 100 : 0;
+            monthlyTrend.push({ month: dLabel, attendance: parseFloat(Math.min(100, mRate).toFixed(1)) });
         }
 
-        // 4. Class Performance (Top 6)
+        // 4. Class Performance
         const classes = await Class.find();
-        const classStats = [];
+        const classPerformance = [];
         for (const cls of classes) {
-            const students = await Student.find({ className: cls.name, status: 'active' });
-            if (students.length === 0) continue;
+            const clsStudents = await Student.find({ className: cls.name, status: 'active' });
+            if (clsStudents.length === 0) continue;
 
-            const ids = students.map(s => s.hikvisionEmployeeId);
-            const count = await Attendance.countDocuments({
+            const clsIds = clsStudents.map(s => s.hikvisionEmployeeId);
+            const clsCount = await Attendance.countDocuments({
                 date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
-                hikvisionEmployeeId: { $in: ids },
+                hikvisionEmployeeId: { $in: clsIds },
                 role: 'student',
-                $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: null, $ne: "" } }]
+                $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
             });
-
-            const score = (count / (students.length * dayOfMonth)) * 100;
-            classStats.push({
-                class: cls.name,
-                attendance: parseFloat(Math.min(100, score).toFixed(1))
-            });
+            const clsRate = (clsCount / (clsStudents.length * dayOfMonth)) * 100;
+            classPerformance.push({ class: cls.name, attendance: parseFloat(Math.min(100, clsRate).toFixed(1)) });
         }
+        const classPerformanceSorted = classPerformance.sort((a, b) => b.attendance - a.attendance);
 
-        const sortedClasses = classStats.sort((a, b) => b.attendance - a.attendance);
-        const bestClass = sortedClasses.length > 0 ? sortedClasses[0] : { class: 'N/A', attendance: 0 };
-
-        // 5. Weekly Trend Data
+        // 5. Weekly Trend
         const weeklyTrendData = [];
-        const weekDaysKey = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
-        const tempDate = new Date();
-        const dayOfWeek = tempDate.getDay(); // 0 is Sunday
-        const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
-
+        const weekLabels = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
+        const temp = new Date();
+        const dayIdx = temp.getDay();
+        const diff = (dayIdx === 0 ? -6 : 1) - dayIdx;
         for (let i = 0; i < 6; i++) {
-            const thisWeekDate = new Date();
-            thisWeekDate.setDate(tempDate.getDate() + diffToMonday + i);
-            const lastWeekDate = new Date(thisWeekDate);
-            lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+            const tDate = new Date();
+            tDate.setDate(temp.getDate() + diff + i);
+            const lDate = new Date(tDate);
+            lDate.setDate(lDate.getDate() - 7);
 
-            const tDateStr = thisWeekDate.toISOString().split('T')[0];
-            const lDateStr = lastWeekDate.toISOString().split('T')[0];
+            const tStr = tDate.toISOString().split('T')[0];
+            const lStr = lDate.toISOString().split('T')[0];
 
-            const tCount = await Attendance.countDocuments({ date: tDateStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
-            const lCount = await Attendance.countDocuments({ date: lDateStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
+            const tCount = await Attendance.countDocuments({ date: tStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
+            const lCount = await Attendance.countDocuments({ date: lStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
 
             weeklyTrendData.push({
-                day: weekDaysKey[i],
+                day: weekLabels[i],
                 thisWeek: totalStudents > 0 ? parseFloat(Math.min(100, (tCount / totalStudents) * 100).toFixed(1)) : 0,
                 lastWeek: totalStudents > 0 ? parseFloat(Math.min(100, (lCount / totalStudents) * 100).toFixed(1)) : 0
             });
         }
 
-        // 6. Top Students (Best attendance)
-        const topStudentsRaw = await Attendance.aggregate([
-            { $match: { date: { $gte: startOfMonthStr, $lte: endOfMonthStr }, role: 'student' } },
-            {
-                $group: {
-                    _id: '$hikvisionEmployeeId',
-                    count: {
-                        $sum: {
-                            $cond: [
-                                { $or: [{ $eq: ['$status', 'present'] }, { $gt: [{ $strLenCP: { $ifNull: ['$firstCheckIn', ""] } }, 0] }] },
-                                1, 0
-                            ]
-                        }
-                    },
-                    name: { $first: '$name' },
-                    dept: { $first: '$department' }
-                }
-            },
-            { $sort: { count: -1 } },
-            { $limit: 5 }
-        ]);
+        // 6. Top Students (Fallback logic)
+        // Simplified top students from last 500 records this month to avoid aggregation errors
+        const recentMonthly = await Attendance.find({
+            date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
+            role: 'student',
+            $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
+        }).limit(1000);
 
-        const topStudents = topStudentsRaw.map(s => ({
-            name: s.name || "Noma'lum",
-            class: s.dept || "N/A",
-            attendance: parseFloat(((s.count / dayOfMonth) * 100).toFixed(1)),
-            days: s.count
-        }));
+        const studentStats = {};
+        recentMonthly.forEach(r => {
+            if (!studentStats[r.hikvisionEmployeeId]) {
+                studentStats[r.hikvisionEmployeeId] = { name: r.name, class: r.department, count: 0 };
+            }
+            studentStats[r.hikvisionEmployeeId].count++;
+        });
 
-        // Response
+        const topStudents = Object.values(studentStats)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5)
+            .map(s => ({
+                name: s.name,
+                class: s.class || "N/A",
+                days: s.count,
+                attendance: parseFloat(((s.count / dayOfMonth) * 100).toFixed(1))
+            }));
+
         res.json({
             success: true,
             stats: {
                 avgAttendance: parseFloat(avgAttendance.toFixed(1)),
-                bestClass: bestClass.class,
-                bestClassRate: bestClass.attendance,
-                totalStudents,
+                bestClass: classPerformanceSorted.length > 0 ? classPerformanceSorted[0].class : 'N/A',
+                bestClassRate: classPerformanceSorted.length > 0 ? classPerformanceSorted[0].attendance : 0,
+                totalStudents: totalStudents || 0,
                 latePercentage: parseFloat(latePercentage.toFixed(1))
             },
             charts: {
                 monthlyTrend,
                 attendanceDistribution,
                 weeklyTrendData,
-                classPerformance: sortedClasses.slice(0, 6)
+                classPerformance: classPerformanceSorted.slice(0, 6)
             },
             topStudents
         });
 
     } catch (error) {
-        console.error('❌ FATAL API Error (getReportStats):', error);
-        res.status(500).json({ success: false, error: 'Ma\'lumotlarni hisoblashda xatolik', message: error.message });
+        console.error('❌ REPORTS API CRASH:', error);
+        res.status(500).json({ success: false, error: 'Database error', message: error.message });
     }
 };
 
 export const saveExcelReport = (req, res) => {
     try {
-        const { reportDate } = req.body;
-        const file = req.file;
-
-        if (!file) {
-            return res.status(400).json({ success: false, error: 'Fayl topilmadi' });
-        }
-
-        const filePath = `C:\\hisobot\\${file.filename}`;
-        console.log(`📊 Excel hisobot saqlandi: ${filePath}`);
-
-        res.json({
-            success: true,
-            message: 'Hisobot muvaffaqiyatli saqlandi',
-            reportDate,
-            filename: file.filename
-        });
-    } catch (error) {
-        console.error('❌ saveExcelReport error:', error);
-        res.status(500).json({ success: false, error: 'Hisobotni saqlashda xato yuz berdi' });
+        if (!req.file) return res.status(400).json({ success: false, error: 'File missing' });
+        res.json({ success: true, message: 'Saved', filename: req.file.filename });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
     }
 };

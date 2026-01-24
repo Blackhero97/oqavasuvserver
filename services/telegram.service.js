@@ -238,9 +238,9 @@ export const sendAttendanceReport = async (role = 'student') => {
         }
 
         if (absentCount > 0) {
-            message += `*🚫 KELMAGANLAR:* \`(${absentCount})\` \n`;
+            message += `*🚫 KELMAGANLAR (${absentCount}):*\n`;
             absentees.forEach((emp, index) => {
-                message += `• _${emp.name}_\n`;
+                message += `➖ _${emp.name}_\n`;
             });
         }
 
@@ -325,9 +325,9 @@ export const sendClassAttendanceReport = async (className) => {
         }
 
         if (absentCount > 0) {
-            message += `*🚫 KELMAGANLAR:* \`(${absentCount})\` \n`;
+            message += `*🚫 KELMAGANLAR (${absentCount}):*\n`;
             absentees.forEach(s => {
-                message += `• _${s.name}_\n`;
+                message += `➖ _${s.name}_\n`;
             });
         }
 
@@ -388,10 +388,10 @@ export const sendCustomMessage = async (title, message, recipient = "Barcha") =>
         telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
         telegramMessage += `🤖 *BM CRM Tizimi*`;
 
-        await bot.sendMessage(chatId, telegramMessage, { parse_mode: 'Markdown' });
-        console.log(`✅ Custom message sent to Telegram: "${title}"`);
+        const broadcastResult = await broadcastMessage(telegramMessage);
+        console.log(`✅ Custom message "${title}" broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
 
-        return { success: true, title, recipient };
+        return { success: true, title, recipient, broadcast: broadcastResult };
     } catch (error) {
         console.error('❌ Error sending custom message:', error);
         return { success: false, error: error.message };

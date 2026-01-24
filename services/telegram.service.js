@@ -53,15 +53,31 @@ if (token) {
             );
 
             const userName = user.first_name || user.username || 'Foydalanuvchi';
-            bot.sendMessage(chatId,
-                `Assalomu alaykum, ${userName}! 👋\n\n` +
-                `✅ Siz BM Maktab CRM bot'iga obuna bo'ldingiz.\n\n` +
-                `📊 Endi siz maktab hisobotlarini avtomatik olasiz:\n` +
-                `• Davomat hisobotlari\n` +
-                `• E'lonlar va xabarlar\n` +
-                `• Majlis va tadbirlar haqida ma'lumotlar\n\n` +
-                `🔔 Xabarlarni olishni to'xtatish uchun /stop buyrug'ini yuboring.`
-            );
+
+            let welcomeMsg = `━━━━━━━━━━━━━━━━━━━━\n`;
+            welcomeMsg += `🏛 *BM MAKTAB | CRM TIZIMI* 🏛\n`;
+            welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+            welcomeMsg += `Xush kelibsiz, *${userName}*! 👋\n\n`;
+            welcomeMsg += `Siz *BM CRM Davomat* tizimiga muvaffaqiyatli obuna bo'ldingiz. Endi barcha muhim bildirishnomalar to'g'ridan-to'g'ri shu yerga keladi:\n\n`;
+
+            welcomeMsg += `📊 *DAVOMAT:* Kunlik yig'ma hisobotlar\n`;
+            welcomeMsg += `📢 *XABARLAR:* Tezkor e'lonlar va majlislar\n`;
+            welcomeMsg += `🔔 *BILDIRISHLAR:* Shaxsiy va umumiy eslatmalar\n\n`;
+
+            welcomeMsg += `──────────────────\n`;
+            welcomeMsg += `✨ *Hozirda:* Tizim faol va barcha xizmatlar ishlamoqda.\n`;
+            welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
+            welcomeMsg += `🤖 *BM CRM Bot* | v2.0.1`;
+
+            bot.sendMessage(chatId, welcomeMsg, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "🌐 CRM Paneliga O'tish", url: "https://bm-crm-test.netlify.app" }]
+                    ]
+                }
+            });
 
             console.log(`✅ Yangi foydalanuvchi qo'shildi: ${userName} (${chatId})`);
         } catch (error) {
@@ -80,10 +96,15 @@ if (token) {
                 { isActive: false }
             );
 
-            bot.sendMessage(chatId,
-                `❌ Siz bot'dan chiqib ketdingiz.\n\n` +
-                `Qayta obuna bo'lish uchun /start buyrug'ini yuboring.`
-            );
+            let stopMsg = `━━━━━━━━━━━━━━━━━━━━\n`;
+            stopMsg += `🔕 *OBUNA BEKOR QILINDI*\n`;
+            stopMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+            stopMsg += `Siz xabarnomalarni olishni to'xtatdingiz. Endi CRM tizimidan bildirishnomalar kelmaydi.\n\n`;
+            stopMsg += `🔄 *Qayta ulanish:* Xohlagan vaqtingizda /start buyrug'ini yuboring.\n\n`;
+            stopMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
+            stopMsg += `👋 *Xayr, salomat bo'ling!*`;
+
+            bot.sendMessage(chatId, stopMsg, { parse_mode: 'Markdown' });
 
             console.log(`❌ Foydalanuvchi chiqib ketdi: ${chatId}`);
         } catch (error) {

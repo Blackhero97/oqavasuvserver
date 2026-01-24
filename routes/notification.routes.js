@@ -18,7 +18,7 @@ router.get('/ping', (req, res) => {
  * POST /api/notifications/telegram/attendance
  * Manually trigger a Telegram attendance report
  */
-router.post('/telegram/attendance', authenticateToken, async (req, res) => {
+router.post('/telegram/attendance', async (req, res) => {
     try {
         const { role } = req.body;
         if (!role) {
@@ -45,7 +45,7 @@ router.post('/telegram/attendance', authenticateToken, async (req, res) => {
  * POST /api/notifications/telegram/class-attendance
  * Manually trigger a Telegram attendance report for a specific class
  */
-router.post('/telegram/class-attendance', authenticateToken, async (req, res) => {
+router.post('/telegram/class-attendance', async (req, res) => {
     try {
         const { className } = req.body;
         if (!className) {
@@ -72,7 +72,7 @@ router.post('/telegram/class-attendance', authenticateToken, async (req, res) =>
  * GET /api/notifications/telegram/status
  * Check if Telegram Bot is configured
  */
-router.get('/telegram/status', authenticateToken, (req, res) => {
+router.get('/telegram/status', (req, res) => {
     const isConfigured = !!process.env.TELEGRAM_BOT_TOKEN;
     const hasChatId = !!process.env.TELEGRAM_CHAT_ID;
 

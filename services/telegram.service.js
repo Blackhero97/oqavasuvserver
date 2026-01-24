@@ -58,25 +58,21 @@ if (token) {
             welcomeMsg += `🏛 *BM MAKTAB | CRM TIZIMI* 🏛\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-            welcomeMsg += `Xush kelibsiz, *${userName}*! 👋\n\n`;
-            welcomeMsg += `Siz *BM CRM Davomat* tizimiga muvaffaqiyatli obuna bo'ldingiz. Endi barcha muhim bildirishnomalar to'g'ridan-to'g'ri shu yerga keladi:\n\n`;
+            welcomeMsg += `Assalomu alaykum, *${userName}*!\n\n`;
+            welcomeMsg += `Ushbu bot orqali siz *BM Maktab* axborot tizimi tomonidan yuboriladigan rasmiy xabarnomalarni qabul qilib borasiz. Obuna muvaffaqiyatli amalga oshirildi.\n\n`;
 
-            welcomeMsg += `📊 *DAVOMAT:* Kunlik yig'ma hisobotlar\n`;
-            welcomeMsg += `📢 *XABARLAR:* Tezkor e'lonlar va majlislar\n`;
-            welcomeMsg += `🔔 *BILDIRISHLAR:* Shaxsiy va umumiy eslatmalar\n\n`;
+            welcomeMsg += `📊 *ASOSIY XIZMATLAR:* \n`;
+            welcomeMsg += `• Kunlik davomat hisobotlari\n`;
+            welcomeMsg += `• Rasmiy e'lonlar va xabarnomalar\n`;
+            welcomeMsg += `• Ichki tadbir va majlislar jadvali\n\n`;
 
             welcomeMsg += `──────────────────\n`;
-            welcomeMsg += `✨ *Hozirda:* Tizim faol va barcha xizmatlar ishlamoqda.\n`;
+            welcomeMsg += `✨ *Holat:* Tizim to'liq faoliyat yuritmoqda.\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `🤖 *BM CRM Bot* | v2.0.1`;
+            welcomeMsg += `🤖 *BM CRM Bot* | v2.0.2`;
 
             bot.sendMessage(chatId, welcomeMsg, {
-                parse_mode: 'Markdown',
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: "🌐 CRM Paneliga O'tish", url: "https://bm-crm-test.netlify.app" }]
-                    ]
-                }
+                parse_mode: 'Markdown'
             });
 
             console.log(`✅ Yangi foydalanuvchi qo'shildi: ${userName} (${chatId})`);

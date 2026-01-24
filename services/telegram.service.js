@@ -197,20 +197,26 @@ export const sendAttendanceReport = async (role = 'student') => {
             return (h * 60 + m) > (8 * 60 + 30); // Late after 08:30
         }).length;
 
+        const attendanceRate = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+        const progressBar = '🟢'.repeat(Math.round(attendanceRate / 10)) + '⚪'.repeat(10 - Math.round(attendanceRate / 10));
+
         let message = `━━━━━━━━━━━━━━━━━━━━\n`;
         message += `${emoji} *${roleLabel.toUpperCase()} DAVOMAT* ${emoji}\n`;
         message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
         message += `📅 *Sana:* \`${today}\`\n`;
-        message += `📊 *Statistika:*\n`;
-        message += `├ 👥 Jami: *${total}*\n`;
-        message += `├ ✅ Kelgan: *${presentCount}*\n`;
-        message += `├ ⏰ Kechikkan: *${lateCount}*\n`;
-        message += `└ ❌ Kelmagan: *${absentCount}*\n`;
+        message += `📈 *Davomat ko'rsatkichi:* ${attendanceRate}%\n`;
+        message += `${progressBar}\n\n`;
+
+        message += `📊 *BATAFSIL STATISTIKA:*\n`;
+        message += `👥 Jami: *${total}*\n`;
+        message += `✅ Kelgan: *${presentCount}*\n`;
+        message += `⏰ Kechikkan: *${lateCount}*\n`;
+        message += `❌ Kelmagan: *${absentCount}*\n`;
         message += `\n──────────────────\n\n`;
 
         if (presentCount > 0) {
-            message += `*📍 KELGANLAR VAQTI:*\n`;
+            message += `*📍 KELGANLAR RO'YXATI:*\n`;
             // Sort by check-in time
             const sortedPresent = [...records]
                 .filter(r => r.firstCheckIn)
@@ -224,9 +230,9 @@ export const sendAttendanceReport = async (role = 'student') => {
                     return (h * 60 + m) > (8 * 60 + 30);
                 })();
 
-                const statusIcon = isLate ? '🕒' : '✅';
+                const statusIcon = isLate ? '🕒' : '🔹';
                 message += `${statusIcon} *${r.name}*\n`;
-                message += `   └ 🛫 \`${checkIn}\` - 🛬 \`${checkOut}\`\n`;
+                message += `   └─ 🛫 \`${checkIn}\`  ➡️  🛬 \`${checkOut}\`\n`;
             });
             message += `\n`;
         }
@@ -288,26 +294,32 @@ export const sendClassAttendanceReport = async (className) => {
         const presentHikIds = new Set(presentRecords.map(r => r.hikvisionEmployeeId));
         const absentees = students.filter(s => !presentHikIds.has(s.hikvisionEmployeeId));
 
+        const attendanceRate = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+        const progressBar = '🟢'.repeat(Math.round(attendanceRate / 10)) + '⚪'.repeat(10 - Math.round(attendanceRate / 10));
+
         let message = `━━━━━━━━━━━━━━━━━━━━\n`;
         message += `🏫 *${className.toUpperCase()} SINFI DAVOMATI* 🏫\n`;
         message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
         message += `📅 *Sana:* \`${today}\`\n`;
-        message += `📊 *Statistika:*\n`;
-        message += `├ 👥 Jami o'quvchi: *${total}*\n`;
-        message += `├ ✅ Kelgan: *${presentCount}*\n`;
-        message += `└ ❌ Kelmagan: *${absentCount}*\n`;
+        message += `📈 *Davomat ko'rsatkichi:* ${attendanceRate}%\n`;
+        message += `${progressBar}\n\n`;
+
+        message += `📊 *STATISTIKA:*\n`;
+        message += `👥 Jami o'quvchi: *${total}*\n`;
+        message += `✅ Kelgan: *${presentCount}*\n`;
+        message += `❌ Kelmagan: *${absentCount}*\n`;
         message += `\n──────────────────\n\n`;
 
         if (presentCount > 0) {
-            message += `*📍 KELGANLAR VAQTI:*\n`;
+            message += `*📍 KELGANLAR RO'YXATI:*\n`;
             const sortedRecords = [...presentRecords].sort((a, b) => a.firstCheckIn.localeCompare(b.firstCheckIn));
 
             sortedRecords.forEach(r => {
                 const checkIn = r.firstCheckIn || '--:--';
                 const checkOut = r.lastCheckOut || '--:--';
-                message += `✅ *${r.name}*\n`;
-                message += `   └ 🛫 \`${checkIn}\` - 🛬 \`${checkOut}\`\n`;
+                message += `🔹 *${r.name}*\n`;
+                message += `   └─ 🛫 \`${checkIn}\`  ➡️  🛬 \`${checkOut}\`\n`;
             });
             message += `\n`;
         }

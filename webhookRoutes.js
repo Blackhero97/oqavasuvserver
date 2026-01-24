@@ -146,6 +146,12 @@ router.post("/hikvision", upload.any(), async (req, res) => {
       });
       console.log(`✅ ${employee.name} - CHECK IN at ${timeStr}`);
     } else {
+      // ✅ Update role and department if they changed in Employee database
+      if (attendance.role !== employee.role || attendance.department !== employee.department) {
+        attendance.role = employee.role;
+        attendance.department = employee.department;
+      }
+
       // Determine check-in or check-out
       const lastEvent = attendance.events[attendance.events.length - 1];
       const newEventType = lastEvent.type === "IN" ? "OUT" : "IN";

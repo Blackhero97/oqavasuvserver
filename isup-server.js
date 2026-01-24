@@ -104,6 +104,15 @@ async function processAttendanceEvent(eventData) {
             });
             console.log(`✅ ${employee.name} (${role}) - CHECK IN at ${timeStr}`);
         } else {
+            // ✅ Update role and department if they changed
+            const role = isStudent ? 'student' : (employee.role || 'staff');
+            const department = employee.className || employee.department || 'Unknown';
+
+            if (attendance.role !== role || attendance.department !== department) {
+                attendance.role = role;
+                attendance.department = department;
+            }
+
             // Determine if check-in or check-out
             const lastEvent = attendance.events[attendance.events.length - 1];
             const newEventType = lastEvent.type === 'IN' ? 'OUT' : 'IN';

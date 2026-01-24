@@ -129,7 +129,7 @@ export const sendAttendanceReport = async (role = 'student') => {
         }
 
         message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}`;
+        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
         await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         console.log(`✅ ${roleLabel} ultra-detailed attendance report sent to Telegram`);
@@ -206,7 +206,7 @@ export const sendClassAttendanceReport = async (className) => {
         }
 
         message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })}`;
+        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
         await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
         return { success: true, present: presentCount, absent: absentCount, total };
@@ -237,11 +237,13 @@ export const sendCustomMessage = async (title, message, recipient = "Barcha") =>
 
         const now = new Date();
         const dateStr = now.toLocaleDateString('uz-UZ', {
+            timeZone: 'Asia/Tashkent',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
         const timeStr = now.toLocaleTimeString('uz-UZ', {
+            timeZone: 'Asia/Tashkent',
             hour: '2-digit',
             minute: '2-digit'
         });

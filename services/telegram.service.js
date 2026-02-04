@@ -4,6 +4,7 @@ import Attendance from '../models/Attendance.js';
 import Employee from '../models/Employee.js';
 import Student from '../models/Student.js';
 import TelegramUser from '../models/TelegramUser.js';
+import NotificationLog from '../models/NotificationLog.js';
 
 dotenv.config();
 
@@ -250,61 +251,148 @@ export const sendAttendanceReport = async (role = 'student') => {
         }).length;
 
         const attendanceRate = total > 0 ? Math.round((presentCount / total) * 100) : 0;
-        const progressBar = '🟢'.repeat(Math.round(attendanceRate / 10)) + '⚪'.repeat(10 - Math.round(attendanceRate / 10));
 
-        let message = `━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `${emoji} *${roleLabel.toUpperCase()} DAVOMAT* ${emoji}\n`;
-        message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+        // Enhanced progress bar with gradient effect
+        const progressSegments = Math.round(attendanceRate / 10);
+        const progressBar = '█'.repeat(progressSegments) + '░'.repeat(10 - progressSegments);
 
-        message += `📅 *Sana:* \`${today}\`\n`;
-        message += `📈 *Davomat ko'rsatkichi:* ${attendanceRate}%\n`;
-        message += `${progressBar}\n\n`;
+        // Status indicator based on attendance rate
+        let statusEmoji = '🔴';
+        let statusText = 'Kam';
+        if (attendanceRate >= 90) {
+            statusEmoji = '🟢';
+            statusText = 'A\'lo';
+        } else if (attendanceRate >= 75) {
+            statusEmoji = '🟡';
+            statusText = 'Yaxshi';
+        } else if (attendanceRate >= 60) {
+            statusEmoji = '🟠';
+            statusText = 'O\'rta';
+        }
 
-        message += `📊 *BATAFSIL STATISTIKA:*\n`;
-        message += `👥 Jami: *${total}*\n`;
-        message += `✅ Kelgan: *${presentCount}*\n`;
-        message += `⏰ Kechikkan: *${lateCount}*\n`;
-        message += `❌ Kelmagan: *${absentCount}*\n`;
-        message += `\n──────────────────\n\n`;
+        // Get current time for greeting
+        const now = new Date();
+        const hour = now.getHours();
+        let greeting = '🌙';
+        if (hour >= 5 && hour < 12) greeting = '🌅';
+        else if (hour >= 12 && hour < 18) greeting = '☀️';
+        else if (hour >= 18 && hour < 22) greeting = '🌆';
+
+        // Build modern message
+        let message = `╔═══════════════════════╗\n`;
+        message += `║  ${emoji} *${roleLabel.toUpperCase()} DAVOMATI* ${emoji}  ║\n`;
+        message += `╚═══════════════════════╝\n\n`;
+
+        message += `${greeting} *Sana:* \`${today}\`\n`;
+        message += `� *Vaqt:* \`${now.toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}\`\n\n`;
+
+        message += `┏━━━━━━━━━━━━━━━━━━━━┓\n`;
+        message += `┃  📊 *UMUMIY STATISTIKA*  ┃\n`;
+        message += `┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+
+        message += `▫️ Jami: *${total}* kishi\n`;
+        message += `✅ Kelgan: *${presentCount}* kishi\n`;
+        message += `⏰ Kechikkan: *${lateCount}* kishi\n`;
+        message += `❌ Kelmagan: *${absentCount}* kishi\n\n`;
+
+        message += `┌─────────────────────┐\n`;
+        message += `│ *Davomat ko'rsatkichi* │\n`;
+        message += `└─────────────────────┘\n`;
+        message += `${statusEmoji} *${attendanceRate}%* - ${statusText}\n`;
+        message += `${progressBar} ${attendanceRate}%\n\n`;
 
         if (presentCount > 0) {
-            message += `*📍 KELGANLAR RO'YXATI:*\n`;
+            message += `╭─────────────────────╮\n`;
+            message += `│ 📍 *KELGANLAR RO'YXATI* │\n`;
+            message += `╰─────────────────────╯\n\n`;
+
             // Sort by check-in time
             const sortedPresent = [...records]
                 .filter(r => r.firstCheckIn)
                 .sort((a, b) => a.firstCheckIn.localeCompare(b.firstCheckIn));
 
-            sortedPresent.forEach((r, index) => {
-                const checkIn = r.firstCheckIn || '--:--';
-                const checkOut = r.lastCheckOut || '--:--';
-                const isLate = (function () {
-                    const [h, m] = checkIn.split(':').map(Number);
-                    return (h * 60 + m) > (8 * 60 + 30);
-                })();
+            // Group by on-time and late
+            const onTime = sortedPresent.filter(r => {
+                const [h, m] = r.firstCheckIn.split(':').map(Number);
+                return (h * 60 + m) <= (8 * 60 + 30);
+            });
 
-                const statusIcon = isLate ? '🕒' : '🔹';
-                message += `${statusIcon} *${r.name}*\n`;
-                message += `   └─ 🛫 \`${checkIn}\`  ➡️  🛬 \`${checkOut}\`\n`;
+            const late = sortedPresent.filter(r => {
+                const [h, m] = r.firstCheckIn.split(':').map(Number);
+                return (h * 60 + m) > (8 * 60 + 30);
+            });
+
+            if (onTime.length > 0) {
+                message += `*🟢 Vaqtida kelganlar (${onTime.length}):*\n`;
+                onTime.forEach((r, index) => {
+                    const checkIn = r.firstCheckIn || '--:--';
+                    const checkOut = r.lastCheckOut || '--:--';
+                    message += `${index + 1}. *${r.name}*\n`;
+                    message += `   ⏰ ${checkIn} → ${checkOut}\n`;
+                });
+                message += `\n`;
+            }
+
+            if (late.length > 0) {
+                message += `*🟡 Kechikkanlar (${late.length}):*\n`;
+                late.forEach((r, index) => {
+                    const checkIn = r.firstCheckIn || '--:--';
+                    const checkOut = r.lastCheckOut || '--:--';
+                    const [h, m] = checkIn.split(':').map(Number);
+                    const lateMinutes = (h * 60 + m) - (8 * 60 + 30);
+                    message += `${index + 1}. *${r.name}*\n`;
+                    message += `   ⏰ ${checkIn} → ${checkOut} _(+${lateMinutes} min)_\n`;
+                });
+                message += `\n`;
+            }
+        }
+
+        if (absentCount > 0) {
+            message += `╭─────────────────────╮\n`;
+            message += `│ 🚫 *KELMAGANLAR* (${absentCount}) │\n`;
+            message += `╰─────────────────────╯\n\n`;
+            absentees.forEach((emp, index) => {
+                message += `${index + 1}. _${emp.name}_\n`;
             });
             message += `\n`;
         }
 
-        if (absentCount > 0) {
-            message += `*🚫 KELMAGANLAR (${absentCount}):*\n`;
-            absentees.forEach((emp, index) => {
-                message += `➖ _${emp.name}_\n`;
-            });
-        }
-
         if (total === 0) {
-            message += `⚠️ _Ushbu kunda ma'lumot topilmadi._\n`;
+            message += `⚠️ _Ushbu kategoriyada ma'lumot topilmadi._\n\n`;
         }
 
-        message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
+        message += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        message += `🤖 *BM CRM Tizimi*\n`;
+        message += `📅 ${new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: 'long', year: 'numeric' })}\n`;
+        message += `🕐 ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
         const broadcastResult = await broadcastMessage(message);
         console.log(`✅ ${roleLabel} attendance report broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
+
+        // Log the notification
+        try {
+            await NotificationLog.create({
+                type: 'telegram',
+                category: 'attendance',
+                target: role,
+                title: `${roleLabel} Davomati`,
+                message: message.substring(0, 500), // Store first 500 chars
+                status: broadcastResult.sent > 0 ? 'sent' : 'failed',
+                recipients: {
+                    sent: broadcastResult.sent,
+                    failed: broadcastResult.failed,
+                    total: broadcastResult.sent + broadcastResult.failed
+                },
+                metadata: {
+                    presentCount,
+                    absentCount,
+                    totalCount: total,
+                    attendanceRate
+                }
+            });
+        } catch (logError) {
+            console.error('Failed to log notification:', logError);
+        }
 
         return { success: true, present: presentCount, absent: absentCount, total, broadcast: broadcastResult };
     } catch (error) {

@@ -111,4 +111,34 @@ router.post('/telegram/custom', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/notifications/history
+ * Get notification history with pagination
+ */
+router.get('/history', async (req, res) => {
+    try {
+        const { limit = 10, type, category } = req.query;
+
+        const query = {};
+        if (type) query.type = type;
+        if (category) query.category = category;
+
+        const NotificationLog = (await import('../models/NotificationLog.js')).default;
+
+        const notifications = await NotificationLog.find(query)
+            .sort({ sentAt: -1 })
+            .limit(parseInt(limit))
+            .lean();
+
+        res.json({
+            success: true,
+            count: notifications.length,
+            notifications
+        });
+    } catch (error) {
+        console.error('Error fetching notification history:', error);
+        res.status(500).json({ error: 'Failed to fetch notification history' });
+    }
+});
+
 export default router;

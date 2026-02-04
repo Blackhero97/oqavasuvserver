@@ -11,8 +11,9 @@ export const initializeScheduler = () => {
     // Tasks: 09:00 har kuni (0 9 * * *)
     cron.schedule('0 9 * * *', async () => {
         console.log('🕒 Triggering Morning Attendance Report (09:00)...');
-        await sendAttendanceReport('teacher');
         await sendAttendanceReport('student');
+        await sendAttendanceReport('teacher');
+        await sendAttendanceReport('staff');
     }, {
         scheduled: true,
         timezone: "Asia/Tashkent"
@@ -22,8 +23,9 @@ export const initializeScheduler = () => {
     // Tasks: 17:00 har kuni (0 17 * * *)
     cron.schedule('0 17 * * *', async () => {
         console.log('🕒 Triggering Evening Attendance Report (17:00)...');
-        await sendAttendanceReport('teacher');
         await sendAttendanceReport('student');
+        await sendAttendanceReport('teacher');
+        await sendAttendanceReport('staff');
     }, {
         scheduled: true,
         timezone: "Asia/Tashkent"

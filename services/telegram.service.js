@@ -155,36 +155,92 @@ async function broadcastMessage(message) {
  */
 export const sendAttendanceReport = async (role = 'student') => {
     try {
+        console.log(`📊 Starting attendance report for role: ${role}`);
+
         if (!bot) {
             console.error('❌ Telegram Bot is not initialized (missing token)');
-            return;
+            return { success: false, error: 'Telegram Bot not initialized' };
         }
 
         const chatId = process.env.TELEGRAM_CHAT_ID;
         if (!chatId) {
             console.warn('⚠️ TELEGRAM_CHAT_ID is not set in .env');
-            return;
+            return { success: false, error: 'TELEGRAM_CHAT_ID not set' };
         }
 
         const today = new Date().toISOString().split('T')[0];
-        const roleLabel = role === 'student' ? 'O\'quvchilar' : 'O\'qituvchilar';
-        const emoji = role === 'student' ? '🎓' : '👨‍🏫';
 
-        // Fetch today's records for this role
-        const records = await Attendance.find({ date: today, role: role });
+        // Role label mapping
+        const roleLabelMap = {
+            'student': 'O\'quvchilar',
+            'teacher': 'O\'qituvchilar',
+            'staff': 'Hodimlar'
+        };
+        const roleLabel = roleLabelMap[role] || 'Xodimlar';
 
-        // Fetch all active employees/students of this role
-        // Note: For students, we might need to check the Student collection too if not synced
-        const allEmployees = await Employee.find({ role: role, status: 'active' });
+        // Emoji mapping
+        const emojiMap = {
+            'student': '🎓',
+            'teacher': '👨‍🏫',
+            'staff': '👔'
+        };
+        const emoji = emojiMap[role] || '👤';
+
+        // Fetch all active employees/students of this role first
+        let allEmployees;
+        if (role === 'student') {
+            // For students, check Student collection
+            allEmployees = await Student.find({ status: 'active' });
+            console.log(`📚 Found ${allEmployees.length} active students`);
+        } else if (role === 'teacher') {
+            // For teachers
+            allEmployees = await Employee.find({ role: 'teacher', status: 'active' });
+            console.log(`👨‍🏫 Found ${allEmployees.length} active teachers`);
+        } else if (role === 'staff') {
+            // For staff - get all employees that are NOT teachers or students
+            // This includes: role='staff', role=null, role='admin', etc.
+            allEmployees = await Employee.find({
+                $and: [
+                    { status: 'active' },
+                    { role: { $ne: 'teacher' } },
+                    { role: { $ne: 'student' } }
+                ]
+            });
+            console.log(`👔 Found ${allEmployees.length} active staff members`);
+        } else {
+            // Fallback
+            allEmployees = await Employee.find({ role: role, status: 'active' });
+            console.log(`👤 Found ${allEmployees.length} active employees with role: ${role}`);
+        }
 
         const total = allEmployees.length;
+
+        // Get hikvision IDs for this group
+        const hikvisionIds = allEmployees.map(emp => emp.hikvisionEmployeeId).filter(id => id);
+
+        // Fetch today's records by hikvisionEmployeeId instead of role
+        let records = [];
+        if (hikvisionIds.length > 0) {
+            records = await Attendance.find({
+                date: today,
+                hikvisionEmployeeId: { $in: hikvisionIds }
+            });
+        }
+
         const presentRecords = records.filter(r => r.firstCheckIn);
         const presentCount = presentRecords.length;
+        console.log(`✅ Present count: ${presentCount}`);
 
-        // Find absentees
-        const presentIds = new Set(records.map(r => r.hikvisionEmployeeId));
+        // Find absentees - only those who actually checked in should be considered present
+        const presentIds = new Set(presentRecords.map(r => r.hikvisionEmployeeId));
         const absentees = allEmployees.filter(emp => !presentIds.has(emp.hikvisionEmployeeId));
         const absentCount = absentees.length;
+        console.log(`❌ Absent count: ${absentCount}`);
+
+        // Debug: Log some sample data
+        if (absentees.length > 0 && absentees.length <= 5) {
+            console.log('Sample absentees:', absentees.map(a => ({ name: a.name, hikId: a.hikvisionEmployeeId })));
+        }
 
         // Calculate late
         const lateCount = records.filter(r => {

@@ -327,8 +327,8 @@ export const sendAttendanceReport = async (role = 'student') => {
                 onTime.forEach((r, index) => {
                     const checkIn = r.firstCheckIn || '--:--';
                     const checkOut = r.lastCheckOut || '--:--';
-                    message += `🔹 *${r.name}*\n`;
-                    message += `   └─ 🛫 ${checkIn}  ➡️  🛬 ${checkOut}\n`;
+                    message += `${index + 1}. *${r.name}*\n`;
+                    message += `   ⏰ ${checkIn} → ${checkOut}\n`;
                 });
                 message += `\n`;
             }
@@ -340,8 +340,8 @@ export const sendAttendanceReport = async (role = 'student') => {
                     const checkOut = r.lastCheckOut || '--:--';
                     const [h, m] = checkIn.split(':').map(Number);
                     const lateMinutes = (h * 60 + m) - (8 * 60 + 30);
-                    message += `🔹 *${r.name}* _(+${lateMinutes} min kech)_\n`;
-                    message += `   └─ 🛫 ${checkIn}  ➡️  🛬 ${checkOut}\n`;
+                    message += `${index + 1}. *${r.name}*\n`;
+                    message += `   ⏰ ${checkIn} → ${checkOut} _(+${lateMinutes} min)_\n`;
                 });
                 message += `\n`;
             }

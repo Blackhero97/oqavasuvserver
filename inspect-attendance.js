@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import 'dotenv/config';
 import Attendance from './models/Attendance.js';
 
-const MONGODB_URI = 'mongodb+srv://hasanboyleo97_db_user:Mjm88aTbZQFmxMNu@bmcrm.1ieuljj.mongodb.net/attendance_db?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function test() {
     try {

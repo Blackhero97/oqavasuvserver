@@ -4,7 +4,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/attendance_db';
+// Strict: Database Connection from Environment Only
+if (!process.env.MONGODB_URI) {
+    console.error('❌ MONGODB_URI is missing in .env');
+    process.exit(1);
+}
+const MONGODB_URI = process.env.MONGODB_URI;
 
 /**
  * Default admin user yaratish

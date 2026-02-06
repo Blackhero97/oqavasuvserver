@@ -36,18 +36,9 @@ const employeeSchema = new mongoose.Schema(
       enum: ["teacher", "staff", "admin", "student"],
       // Default olib tashlandi - har safar qo'lda belgilanadi
     },
-    // Staff type - xodim lavozimi
+    // Staff type - xodim lavozimi (free text)
     staffType: {
       type: String,
-      enum: [
-        "teacher",
-        "cleaner",
-        "guard",
-        "cook",
-        "director",
-        "vice_director",
-        "hr",
-      ],
       default: null,
     },
     faceId: String,

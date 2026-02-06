@@ -62,11 +62,11 @@ router.post("/hikvision", upload.any(), async (req, res) => {
 
     const eventTime = new Date(
       acEvent?.dateTime ||
-      eventData.dateTime ||
-      eventData.time ||
-      eventData.Time ||
-      req.body.time ||
-      new Date()
+        eventData.dateTime ||
+        eventData.time ||
+        eventData.Time ||
+        req.body.time ||
+        new Date(),
     );
     const dateStr = eventTime.toISOString().split("T")[0];
     // Convert to Uzbekistan timezone UTC+5
@@ -99,10 +99,15 @@ router.post("/hikvision", upload.any(), async (req, res) => {
 
     if (!employee) {
       // Auto-register new employee from Hikvision data
-      const employeeName = acEvent?.name || "Unknown Employee";
+      const employeeName =
+        acEvent?.name ||
+        acEvent?.employeeName ||
+        eventData.employeeName ||
+        req.body.employeeName ||
+        "Unknown Employee";
 
       console.log(
-        `📝 Yangi xodim avtomatik ro'yhatga olinmoqda: ${employeeName} (${employeeNo})`
+        `📝 Yangi xodim avtomatik ro'yhatga olinmoqda: ${employeeName} (${employeeNo})`,
       );
 
       employee = new Employee({
@@ -147,7 +152,10 @@ router.post("/hikvision", upload.any(), async (req, res) => {
       console.log(`✅ ${employee.name} - CHECK IN at ${timeStr}`);
     } else {
       // ✅ Update role and department if they changed in Employee database
-      if (attendance.role !== employee.role || attendance.department !== employee.department) {
+      if (
+        attendance.role !== employee.role ||
+        attendance.department !== employee.department
+      ) {
         attendance.role = employee.role;
         attendance.department = employee.department;
       }
@@ -274,6 +282,5 @@ router.post("/telegram", async (req, res) => {
     res.sendStatus(500);
   }
 });
-
 
 export default router;

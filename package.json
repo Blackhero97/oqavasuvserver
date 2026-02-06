@@ -1,7 +1,7 @@
 {
-  "name": "school-crm-server",
-  "version": "2.0.0",
-  "description": "School CRM Backend Server with JWT Auth and Hikvision Integration",
+  "name": "water-management-api",
+  "version": "1.0.0",
+  "description": "Water Management System API with JWT Auth and MongoDB",
   "main": "index.js",
   "type": "module",
   "engines": {

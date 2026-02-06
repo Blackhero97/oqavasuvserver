@@ -2,7 +2,10 @@ import mongoose from 'mongoose';
 import Attendance from './models/Attendance.js';
 import Class from './models/Class.js';
 
-const MONGODB_URI = 'mongodb+srv://boborahimmashrab:boborahim2006@cluster0.mongodb.net/bm-crm?retryWrites=true&w=majority';
+
+dotenv.config();
+
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function fixDatabase() {
     try {

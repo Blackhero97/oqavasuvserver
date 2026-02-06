@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   BM CRM SERVER - INSTALL
+echo   SERVER - INSTALL
 echo ========================================
 echo.
 
@@ -18,8 +18,8 @@ echo [2/3] Paketlarni o'rnatish...
 call npm install
 
 echo [3/3] Firewall qoidasi qo'shish...
-netsh advfirewall firewall add rule name="BM CRM Server" dir=in action=allow protocol=tcp localport=5000 >nul 2>&1
-netsh advfirewall firewall add rule name="BM CRM ISUP" dir=in action=allow protocol=tcp localport=5200 >nul 2>&1
+netsh advfirewall firewall add rule name="API Server" dir=in action=allow protocol=tcp localport=5000 >nul 2>&1
+netsh advfirewall firewall add rule name="ISUP Server" dir=in action=allow protocol=tcp localport=5200 >nul 2>&1
 
 echo.
 echo ========================================

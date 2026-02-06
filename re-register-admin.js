@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import TelegramBot from 'node-telegram-bot-api';
 import 'dotenv/config';
 
-const MONGODB_URI = 'mongodb+srv://hasanboyleo97_db_user:Mjm88aTbZQFmxMNu@bmcrm.1ieuljj.mongodb.net/attendance_db?retryWrites=true&w=majority';
 const CHAT_ID = '1744670071';
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 

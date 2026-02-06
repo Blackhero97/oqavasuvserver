@@ -10,7 +10,7 @@ export const generateToken = (userId, username, role) => {
             username,
             role
         },
-        process.env.JWT_SECRET || 'bm-crm-secret-key-2025',
+        process.env.JWT_SECRET || 'water-management-secret-key',
         {
             expiresIn: process.env.JWT_EXPIRES_IN || '24h'
         }
@@ -36,7 +36,7 @@ export const authenticateToken = (req, res, next) => {
         // Token verify qilish
         jwt.verify(
             token,
-            process.env.JWT_SECRET || 'bm-crm-secret-key-2025',
+            process.env.JWT_SECRET || 'water-management-secret-key',
             (err, user) => {
                 if (err) {
                     return res.status(403).json({
@@ -94,7 +94,7 @@ export const optionalAuth = (req, res, next) => {
 
     jwt.verify(
         token,
-        process.env.JWT_SECRET || 'bm-crm-secret-key-2025',
+        process.env.JWT_SECRET || 'water-management-secret-key',
         (err, user) => {
             if (!err) {
                 req.user = user;

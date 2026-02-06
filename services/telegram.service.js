@@ -70,7 +70,7 @@ if (token) {
             welcomeMsg += `──────────────────\n`;
             welcomeMsg += `✨ *Holat:* Tizim to'liq faoliyat yuritmoqda.\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `🤖 *BM CRM Bot* | v2.0.2`;
+            welcomeMsg += `🤖 *Attendance Bot* | v2.0.2`;
 
             bot.sendMessage(chatId, welcomeMsg, {
                 parse_mode: 'Markdown'
@@ -472,7 +472,7 @@ export const sendClassAttendanceReport = async (className) => {
         }
 
         message += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *BM CRM Tizimi* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
+        message += `🤖 *Attendance System* | ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 
         const broadcastResult = await broadcastMessage(message);
         console.log(`✅ Class attendance report broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
@@ -526,7 +526,7 @@ export const sendCustomMessage = async (title, message, recipient = "Barcha") =>
         telegramMessage += `──────────────────\n\n`;
         telegramMessage += `${message}\n\n`;
         telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-        telegramMessage += `🤖 *BM CRM Tizimi*`;
+        telegramMessage += `🤖 *Attendance System*`;
 
         const broadcastResult = await broadcastMessage(telegramMessage);
         console.log(`✅ Custom message "${title}" broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);

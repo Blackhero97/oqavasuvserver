@@ -4,7 +4,7 @@ import Employee from './models/Employee.js';
 import Student from './models/Student.js';
 import Attendance from './models/Attendance.js';
 
-const MONGODB_URI = 'mongodb+srv://hasanboyleo97_db_user:Mjm88aTbZQFmxMNu@bmcrm.1ieuljj.mongodb.net/attendance_db?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 async function syncRoles() {
     try {

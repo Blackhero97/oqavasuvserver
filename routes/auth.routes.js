@@ -96,48 +96,19 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // User topish
+        /* 
+        // Bazaviy (Database) loginni vaqtincha o'chirib qo'yamiz - Faqat statik login ruxsat etilgan
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(401).json({
                 error: 'Username yoki password noto\'g\'ri'
             });
         }
+        ...
+        */
 
-        // Active user tekshirish
-        if (!user.isActive) {
-            return res.status(403).json({
-                error: 'User faol emas. Administrator bilan bog\'laning.'
-            });
-        }
-
-        // Password tekshirish
-        const isPasswordValid = await user.comparePassword(password);
-        if (!isPasswordValid) {
-            return res.status(401).json({
-                error: 'Username yoki password noto\'g\'ri'
-            });
-        }
-
-        // Last login yangilash
-        user.lastLogin = new Date();
-        await user.save();
-
-        // Token yaratish
-        const token = generateToken(user._id, user.username, user.role);
-
-        res.json({
-            success: true,
-            message: 'Muvaffaqiyatli kirildi',
-            token,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                fullName: user.fullName,
-                role: user.role,
-                lastLogin: user.lastLogin
-            }
+        return res.status(401).json({
+            error: 'Username yoki password noto\'g\'ri (Faqat statik login ruxsat etilgan)'
         });
     } catch (error) {
         console.error('Login error:', error);

@@ -80,6 +80,22 @@ router.post('/login', async (req, res) => {
             });
         }
 
+        // Check for static credentials
+        if (username === 'oqavasuv' && password === 'suv2026') {
+            return res.json({
+                success: true,
+                message: 'Muvaffaqiyatli kirildi (Statik)',
+                token: generateToken('static-admin-id', 'oqavasuv', 'admin'),
+                user: {
+                    id: 'static-admin-id',
+                    username: 'oqavasuv',
+                    email: 'admin@oqavasuv.uz',
+                    fullName: 'Oqava Suv Admin',
+                    role: 'admin'
+                }
+            });
+        }
+
         // User topish
         const user = await User.findOne({ username });
         if (!user) {

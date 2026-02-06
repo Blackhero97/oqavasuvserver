@@ -21,7 +21,7 @@ export const corsOptions = {
     } else if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all for development
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,

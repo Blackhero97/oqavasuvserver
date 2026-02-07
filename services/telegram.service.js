@@ -55,22 +55,20 @@ if (token) {
 
             const userName = user.first_name || user.username || 'Foydalanuvchi';
 
-            let welcomeMsg = `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `💧 *O'ZSUVTA'MINOT AJ* 💧\n`;
+            let welcomeMsg = `💧 *O'ZSUVTA'MINOT AJ* 💧\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             welcomeMsg += `Assalomu alaykum, *${userName}*!\n\n`;
-            welcomeMsg += `Ushbu bot orqali siz *O'zsuvta'minot AJ* axborot tizimi tomonidan yuboriladigan rasmiy xabarnomalarni qabul qilib borasiz. Obuna muvaffaqiyatli amalga oshirildi.\n\n`;
+            welcomeMsg += `Siz *O'zsuvta'minot AJ* xodimlar davomati va ichki bildirishnomalar tizimiga muvaffaqiyatli ulandingiz.\n\n`;
 
-            welcomeMsg += `📊 *ASOSIY XIZMATLAR:* \n`;
-            welcomeMsg += `• Kunlik davomat hisobotlari\n`;
-            welcomeMsg += `• Rasmiy e'lonlar va xabarnomalar\n`;
-            welcomeMsg += `• Ichki tadbir va majlislar jadvali\n\n`;
+            welcomeMsg += `📑 *ASOSIY FUNKSIYALAR:* \n`;
+            welcomeMsg += `🔹 Kunlik davomat xulosalari\n`;
+            welcomeMsg += `🔹 Tezkor korporativ e'lonlar\n`;
+            welcomeMsg += `🔹 Xodimlar keldi-ketdi nazorati\n\n`;
 
             welcomeMsg += `──────────────────\n`;
-            welcomeMsg += `✨ *Holat:* Tizim to'liq faoliyat yuritmoqda.\n`;
-            welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `🤖 *Suv Ta'minot Bot* | v2.0.2`;
+            welcomeMsg += `✅ *Holat:* Tizim faol ishlash rejimida.\n`;
+            welcomeMsg += `🤖 *Suv Ta'minot Bot* | v2.1.0`;
 
             bot.sendMessage(chatId, welcomeMsg, {
                 parse_mode: 'Markdown'
@@ -277,93 +275,57 @@ export const sendAttendanceReport = async (role = 'student') => {
         else if (hour >= 12 && hour < 18) greeting = '☀️';
         else if (hour >= 18 && hour < 22) greeting = '🌆';
 
-        // Build modern message
-        let message = `╔═══════════════════════╗\n`;
-        message += `║  ${emoji} *${roleLabel.toUpperCase()} DAVOMATI* ${emoji}  ║\n`;
-        message += `╚═══════════════════════╝\n\n`;
+        // Build modern message for Water Utility
+        let message = `💧 *O'ZSUVTA'MINOT AJ | CRM* 💧\n`;
+        message += `📈 *${roleLabel.toUpperCase()} DAVOMATI*\n`;
+        message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        message += `${greeting} *Sana:* \`${today}\`\n`;
-        message += `� *Vaqt:* \`${now.toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}\`\n\n`;
+        message += `📅 *Sana:* \`${today}\`\n`;
+        message += `⏰ *Vaqt:* \`${now.toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}\`\n\n`;
 
-        message += `┏━━━━━━━━━━━━━━━━━━━━┓\n`;
-        message += `┃  📊 *UMUMIY STATISTIKA*  ┃\n`;
-        message += `┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+        message += `📊 *UMUMIY KO'RSATKICHLAR:*\n`;
+        message += `🔹 Jami xodimlar: *${total}*\n`;
+        message += `🔹 Kelganlar: *${presentCount}*\n`;
+        message += `🔹 Kechikkanlar: *${lateCount}*\n`;
+        message += `🔹 Kelmaganlar: *${absentCount}*\n\n`;
 
-        message += `▫️ Jami: *${total}* kishi\n`;
-        message += `✅ Kelgan: *${presentCount}* kishi\n`;
-        message += `⏰ Kechikkan: *${lateCount}* kishi\n`;
-        message += `❌ Kelmagan: *${absentCount}* kishi\n\n`;
-
-        message += `┌─────────────────────┐\n`;
-        message += `│ *Davomat ko'rsatkichi* │\n`;
-        message += `└─────────────────────┘\n`;
-        message += `${statusEmoji} *${attendanceRate}%* - ${statusText}\n`;
-        message += `${progressBar} ${attendanceRate}%\n\n`;
+        message += `📈 *DAVOMAT FOIZI:* ${attendanceRate}%\n`;
+        message += `${progressBar}\n\n`;
 
         if (presentCount > 0) {
-            message += `╭─────────────────────╮\n`;
-            message += `│ 📍 *KELGANLAR RO'YXATI* │\n`;
-            message += `╰─────────────────────╯\n\n`;
+            message += `📍 *KELGANLAR:* \n`;
+            message += `─────────────────────\n`;
 
-            // Sort by check-in time
             const sortedPresent = [...records]
                 .filter(r => r.firstCheckIn)
                 .sort((a, b) => a.firstCheckIn.localeCompare(b.firstCheckIn));
 
-            // Group by on-time and late
-            const onTime = sortedPresent.filter(r => {
-                const [h, m] = r.firstCheckIn.split(':').map(Number);
-                return (h * 60 + m) <= (8 * 60 + 30);
-            });
-
-            const late = sortedPresent.filter(r => {
-                const [h, m] = r.firstCheckIn.split(':').map(Number);
-                return (h * 60 + m) > (8 * 60 + 30);
-            });
-
-            if (onTime.length > 0) {
-                message += `*🟢 Vaqtida kelganlar (${onTime.length}):*\n`;
-                onTime.forEach((r, index) => {
-                    const checkIn = r.firstCheckIn || '--:--';
-                    const checkOut = r.lastCheckOut || '--:--';
-                    message += `${index + 1}. *${r.name}*\n`;
-                    message += `   ⏰ ${checkIn} → ${checkOut}\n`;
-                });
-                message += `\n`;
-            }
-
-            if (late.length > 0) {
-                message += `*🟡 Kechikkanlar (${late.length}):*\n`;
-                late.forEach((r, index) => {
-                    const checkIn = r.firstCheckIn || '--:--';
-                    const checkOut = r.lastCheckOut || '--:--';
+            sortedPresent.forEach((r, index) => {
+                const checkIn = r.firstCheckIn || '--:--';
+                const checkOut = r.lastCheckOut ? ` → ${r.lastCheckOut}` : '';
+                const isLate = (() => {
                     const [h, m] = checkIn.split(':').map(Number);
-                    const lateMinutes = (h * 60 + m) - (8 * 60 + 30);
-                    message += `${index + 1}. *${r.name}*\n`;
-                    message += `   ⏰ ${checkIn} → ${checkOut} _(+${lateMinutes} min)_\n`;
-                });
-                message += `\n`;
-            }
+                    return (h * 60 + m) > (8 * 60 + 30);
+                })();
+
+                message += `${index + 1}. *${r.name}* ${isLate ? '⏰' : '✅'}\n`;
+                message += `   └ Vaqt: \`${checkIn}${checkOut}\`\n`;
+            });
+            message += `\n`;
         }
 
         if (absentCount > 0) {
-            message += `╭─────────────────────╮\n`;
-            message += `│ 🚫 *KELMAGANLAR* (${absentCount}) │\n`;
-            message += `╰─────────────────────╯\n\n`;
+            message += `🚫 *KELMAGANLAR:* \n`;
+            message += `─────────────────────\n`;
             absentees.forEach((emp, index) => {
                 message += `${index + 1}. _${emp.name}_\n`;
             });
             message += `\n`;
         }
 
-        if (total === 0) {
-            message += `⚠️ _Ushbu kategoriyada ma'lumot topilmadi._\n\n`;
-        }
-
         message += `━━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *O'zsuvta'minot CRM*\n`;
-        message += `📅 ${new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: 'long', year: 'numeric' })}\n`;
-        message += `🕐 ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
+        message += `🤖 *Suv Ta'minot CRM* | v2.1.0\n`;
+        message += `📅 ${new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: 'long', year: 'numeric' })}`;
 
         const broadcastResult = await broadcastMessage(message);
         console.log(`✅ ${roleLabel} attendance report broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);
@@ -515,18 +477,19 @@ export const sendCustomMessage = async (title, message, recipient = "Barcha") =>
             minute: '2-digit'
         });
 
-        let telegramMessage = `━━━━━━━━━━━━━━━━━━━━\n`;
-        telegramMessage += `📢 *${title.toUpperCase()}* 📢\n`;
-        telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+        let telegramMessage = `💧 *O'ZSUVTA'MINOT AJ | XABARNOMA* 💧\n`;
+        telegramMessage += `📢 *${title.toUpperCase()}*\n`;
+        telegramMessage += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-        telegramMessage += `👥 *Qabul qiluvchi:* ${recipient}\n`;
+        telegramMessage += `👥 *Kimga:* ${recipient}\n`;
         telegramMessage += `📅 *Sana:* ${dateStr}\n`;
         telegramMessage += `🕐 *Vaqt:* ${timeStr}\n\n`;
 
-        telegramMessage += `──────────────────\n\n`;
+        telegramMessage += `📝 *XABAR MATNI:*\n`;
+        telegramMessage += `──────────────────\n`;
         telegramMessage += `${message}\n\n`;
-        telegramMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-        telegramMessage += `🤖 *Attendance System*`;
+        telegramMessage += `━━━━━━━━━━━━━━━━━━━━━\n`;
+        telegramMessage += `🤖 *Suv Ta'minot CRM*`;
 
         const broadcastResult = await broadcastMessage(telegramMessage);
         console.log(`✅ Custom message "${title}" broadcast: ${broadcastResult.sent} sent, ${broadcastResult.failed} failed`);

@@ -165,8 +165,7 @@ export const sendAttendanceReport = async (role = 'student') => {
 
         const chatId = process.env.TELEGRAM_CHAT_ID;
         if (!chatId) {
-            console.warn('⚠️ TELEGRAM_CHAT_ID is not set in .env');
-            return { success: false, error: 'TELEGRAM_CHAT_ID not set' };
+            console.warn('⚠️ TELEGRAM_CHAT_ID is not set in .env. Will only broadcast to subscribers.');
         }
 
         const today = new Date().toISOString().split('T')[0];
@@ -410,7 +409,9 @@ export const sendClassAttendanceReport = async (className) => {
         if (!bot) return { success: false, error: 'Bot initialization failed' };
 
         const chatId = process.env.TELEGRAM_CHAT_ID;
-        if (!chatId) return { success: false, error: 'TELEGRAM_CHAT_ID not set' };
+        if (!chatId) {
+            console.warn('⚠️ TELEGRAM_CHAT_ID is not set. Will only broadcast to subscribers.');
+        }
 
         const today = new Date().toISOString().split('T')[0];
 
@@ -498,8 +499,7 @@ export const sendCustomMessage = async (title, message, recipient = "Barcha") =>
 
         const chatId = process.env.TELEGRAM_CHAT_ID;
         if (!chatId) {
-            console.warn('⚠️ TELEGRAM_CHAT_ID is not set');
-            return { success: false, error: 'Chat ID not set' };
+            console.warn('⚠️ TELEGRAM_CHAT_ID is not set. Will only broadcast to subscribers.');
         }
 
         const now = new Date();

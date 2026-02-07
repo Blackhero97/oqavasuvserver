@@ -77,7 +77,7 @@ router.get('/telegram/status', (req, res) => {
     const hasChatId = !!process.env.TELEGRAM_CHAT_ID;
 
     res.json({
-        active: isConfigured && hasChatId,
+        active: isConfigured,
         botConfigured: isConfigured,
         chatIdSet: hasChatId
     });

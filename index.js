@@ -1,34 +1,24 @@
-import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createServer } from "http";
-import connectDB from "./db/connection.js";
-import { initializeSocket } from "./services/socket.service.js";
-import { corsOptions } from "./config/cors.js";
-import { initializeScheduler } from "./services/scheduler.service.js";
-
-// Routes
-import webhookRoutes from "./webhookRoutes.js";
-import authRoutes from "./routes/auth.routes.js";
-import setupRoutes from "./routes/setup.routes.js";
-import reportsRoutes from "./routes/reports.routes.js";
-import notificationRoutes from "./routes/notification.routes.js";
-
-// Models
-import Employee from "./models/Employee.js";
-import Attendance from "./models/Attendance.js";
 
 // Setup paths for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
+// Load environment variables immediately
 const envLocalPath = path.resolve(__dirname, "../.env.local");
 const envPath = path.resolve(__dirname, "../.env");
 dotenv.config({ path: envLocalPath });
 dotenv.config({ path: envPath });
+
+import express from "express";
+import cors from "cors";
+import { createServer } from "http";
+import connectDB from "./db/connection.js";
+import { initializeSocket } from "./services/socket.service.js";
+import { corsOptions } from "./config/cors.js";
+import { initializeScheduler } from "./services/scheduler.service.js";
 
 console.log(`🔧 NODE_ENV: ${process.env.NODE_ENV}`);
 

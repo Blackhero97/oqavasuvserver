@@ -63,7 +63,7 @@ app.get("/api/health", (req, res) => {
     status: "OK",
     message: "Oqava Suv Management API is running",
     system: "Water Management - Employee Attendance",
-    version: "1.0.0",
+    version: "1.0.1",
     timestamp: new Date().toISOString(),
   });
 });

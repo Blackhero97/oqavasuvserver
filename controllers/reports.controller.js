@@ -1,6 +1,5 @@
 import Attendance from '../models/Attendance.js';
-import Student from '../models/Student.js';
-import Class from '../models/Class.js';
+import Employee from '../models/Employee.js';
 
 export const getReportStats = async (req, res) => {
     try {
@@ -13,15 +12,14 @@ export const getReportStats = async (req, res) => {
         const todayStr = now.toISOString().split('T')[0];
 
         // Core counts
-        const totalStudents = await Student.countDocuments({ status: 'active' });
+        const totalEmployees = await Employee.countDocuments({ status: 'active' });
 
         const startOfMonthStr = new Date(year, month, 1).toISOString().split('T')[0];
         const endOfMonthStr = new Date(year, month + 1, 0).toISOString().split('T')[0];
 
-        // Monthly Student Records
+        // Monthly Records
         const monthlyRecords = await Attendance.find({
-            date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
-            role: 'student'
+            date: { $gte: startOfMonthStr, $lte: endOfMonthStr }
         });
 
         // Stats calculations
@@ -30,7 +28,7 @@ export const getReportStats = async (req, res) => {
         );
         const presentCount = presentRecords.length;
 
-        const possibleCount = (totalStudents || 0) * dayOfMonth;
+        const possibleCount = (totalEmployees || 0) * dayOfMonth;
         const avgAttendance = possibleCount > 0 ? (presentCount / possibleCount) * 100 : 0;
 
         const lateRecords = presentRecords.filter(r => {
@@ -44,7 +42,7 @@ export const getReportStats = async (req, res) => {
         const latePercentage = presentCount > 0 ? (lateRecords.length / presentCount) * 100 : 0;
 
         // Today Distribution
-        const todayRecords = await Attendance.find({ date: todayStr, role: 'student' });
+        const todayRecords = await Attendance.find({ date: todayStr });
         const presentToday = todayRecords.filter(r => r.status === 'present' || (r.firstCheckIn && r.firstCheckIn.length > 0)).length;
         const lateToday = todayRecords.filter(r => {
             if (!r.firstCheckIn) return false;
@@ -52,7 +50,7 @@ export const getReportStats = async (req, res) => {
             if (p.length < 2) return false;
             return (parseInt(p[0]) * 60 + parseInt(p[1])) > (8 * 60 + 30);
         }).length;
-        const absentToday = Math.max(0, (totalStudents || 0) - presentToday);
+        const absentToday = Math.max(0, (totalEmployees || 0) - presentToday);
 
         const attendanceDistribution = [
             { name: "Keldi", value: Math.max(0, presentToday - lateToday), color: "#22c55e" },
@@ -60,10 +58,10 @@ export const getReportStats = async (req, res) => {
             { name: "Yo'q", value: absentToday, color: "#ef4444" },
         ];
 
-        // 3. Last 10 Months Trend
+        // Last 6 Months Trend
         const monthlyTrend = [];
         const monthNames = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
-        for (let i = 9; i >= 0; i--) {
+        for (let i = 5; i >= 0; i--) {
             const d = new Date(year, month - i, 1);
             const dLabel = monthNames[d.getMonth()];
             const sStr = d.toISOString().split('T')[0];
@@ -71,33 +69,13 @@ export const getReportStats = async (req, res) => {
 
             const mCount = await Attendance.countDocuments({
                 date: { $gte: sStr, $lte: eStr },
-                role: 'student',
                 $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
             });
-            const mRate = totalStudents > 0 ? (mCount / (totalStudents * 22)) * 100 : 0;
+            const mRate = totalEmployees > 0 ? (mCount / (totalEmployees * 22)) * 100 : 0;
             monthlyTrend.push({ month: dLabel, attendance: parseFloat(Math.min(100, mRate).toFixed(1)) });
         }
 
-        // 4. Class Performance
-        const classes = await Class.find();
-        const classPerformance = [];
-        for (const cls of classes) {
-            const clsStudents = await Student.find({ className: cls.name, status: 'active' });
-            if (clsStudents.length === 0) continue;
-
-            const clsIds = clsStudents.map(s => s.hikvisionEmployeeId);
-            const clsCount = await Attendance.countDocuments({
-                date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
-                hikvisionEmployeeId: { $in: clsIds },
-                role: 'student',
-                $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
-            });
-            const clsRate = (clsCount / (clsStudents.length * dayOfMonth)) * 100;
-            classPerformance.push({ class: cls.name, attendance: parseFloat(Math.min(100, clsRate).toFixed(1)) });
-        }
-        const classPerformanceSorted = classPerformance.sort((a, b) => b.attendance - a.attendance);
-
-        // 5. Weekly Trend
+        // Weekly Trend
         const weeklyTrendData = [];
         const weekLabels = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
         const temp = new Date();
@@ -112,38 +90,31 @@ export const getReportStats = async (req, res) => {
             const tStr = tDate.toISOString().split('T')[0];
             const lStr = lDate.toISOString().split('T')[0];
 
-            const tCount = await Attendance.countDocuments({ date: tStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
-            const lCount = await Attendance.countDocuments({ date: lStr, role: 'student', $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
+            const tCount = await Attendance.countDocuments({ date: tStr, $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
+            const lCount = await Attendance.countDocuments({ date: lStr, $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }] });
 
             weeklyTrendData.push({
                 day: weekLabels[i],
-                thisWeek: totalStudents > 0 ? parseFloat(Math.min(100, (tCount / totalStudents) * 100).toFixed(1)) : 0,
-                lastWeek: totalStudents > 0 ? parseFloat(Math.min(100, (lCount / totalStudents) * 100).toFixed(1)) : 0
+                thisWeek: totalEmployees > 0 ? parseFloat(Math.min(100, (tCount / totalEmployees) * 100).toFixed(1)) : 0,
+                lastWeek: totalEmployees > 0 ? parseFloat(Math.min(100, (lCount / totalEmployees) * 100).toFixed(1)) : 0
             });
         }
 
-        // 6. Top Students (Fallback logic)
-        // Simplified top students from last 500 records this month to avoid aggregation errors
-        const recentMonthly = await Attendance.find({
-            date: { $gte: startOfMonthStr, $lte: endOfMonthStr },
-            role: 'student',
-            $or: [{ status: 'present' }, { firstCheckIn: { $exists: true, $ne: "" } }]
-        }).limit(1000);
-
-        const studentStats = {};
-        recentMonthly.forEach(r => {
-            if (!studentStats[r.hikvisionEmployeeId]) {
-                studentStats[r.hikvisionEmployeeId] = { name: r.name, class: r.department, count: 0 };
+        // Top Employees by performance
+        const employeeStats = {};
+        presentRecords.forEach(r => {
+            if (!employeeStats[r.hikvisionEmployeeId]) {
+                employeeStats[r.hikvisionEmployeeId] = { name: r.name, dept: r.department, count: 0 };
             }
-            studentStats[r.hikvisionEmployeeId].count++;
+            employeeStats[r.hikvisionEmployeeId].count++;
         });
 
-        const topStudents = Object.values(studentStats)
+        const topEmployees = Object.values(employeeStats)
             .sort((a, b) => b.count - a.count)
             .slice(0, 5)
             .map(s => ({
                 name: s.name,
-                class: s.class || "N/A",
+                class: s.dept || "Bo'limsiz",
                 days: s.count,
                 attendance: parseFloat(((s.count / dayOfMonth) * 100).toFixed(1))
             }));
@@ -152,18 +123,18 @@ export const getReportStats = async (req, res) => {
             success: true,
             stats: {
                 avgAttendance: parseFloat(avgAttendance.toFixed(1)),
-                bestClass: classPerformanceSorted.length > 0 ? classPerformanceSorted[0].class : 'N/A',
-                bestClassRate: classPerformanceSorted.length > 0 ? classPerformanceSorted[0].attendance : 0,
-                totalStudents: totalStudents || 0,
+                bestClass: 'Barcha bo\'limlar',
+                bestClassRate: parseFloat(avgAttendance.toFixed(1)),
+                totalStudents: totalEmployees || 0,
                 latePercentage: parseFloat(latePercentage.toFixed(1))
             },
             charts: {
                 monthlyTrend,
                 attendanceDistribution,
                 weeklyTrendData,
-                classPerformance: classPerformanceSorted.slice(0, 6)
+                classPerformance: [] // No classes/departments for now in charts to keep it simple
             },
-            topStudents
+            topEmployees
         });
 
     } catch (error) {

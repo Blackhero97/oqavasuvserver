@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 import 'dotenv/config';
 import Employee from './models/Employee.js';
-import Student from './models/Student.js';
 import Attendance from './models/Attendance.js';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -20,26 +19,20 @@ async function syncRoles() {
         let updatedCount = 0;
 
         for (const record of attendanceRecords) {
-            // Check in Student first
-            let person = await Student.findOne({ hikvisionEmployeeId: record.hikvisionEmployeeId });
-            let correctRole = person ? 'student' : null;
-            let correctDept = person ? person.className : null;
+            // Check in Employee
+            const person = await Employee.findOne({ hikvisionEmployeeId: record.hikvisionEmployeeId });
 
-            if (!person) {
-                // Check in Employee
-                person = await Employee.findOne({ hikvisionEmployeeId: record.hikvisionEmployeeId });
-                if (person) {
-                    correctRole = person.role;
-                    correctDept = person.department;
+            if (person) {
+                const correctRole = person.role;
+                const correctDept = person.department;
+
+                if (record.role !== correctRole || record.department !== correctDept) {
+                    console.log(`🔄 Updating ${record.name}: Role ${record.role} -> ${correctRole}, Dept ${record.department} -> ${correctDept}`);
+                    record.role = correctRole;
+                    record.department = correctDept;
+                    await record.save();
+                    updatedCount++;
                 }
-            }
-
-            if (correctRole && (record.role !== correctRole || record.department !== correctDept)) {
-                console.log(`🔄 Updating ${record.name}: Role ${record.role} -> ${correctRole}, Dept ${record.department} -> ${correctDept}`);
-                record.role = correctRole;
-                record.department = correctDept;
-                await record.save();
-                updatedCount++;
             }
         }
 

@@ -44,19 +44,26 @@ export const emitAttendanceUpdate = (data) => {
 };
 
 /**
- * Emit student update event
+ * Emit personnel update event (universal)
  */
-export const emitStudentUpdate = (data) => {
+export const emitPersonnelUpdate = (data) => {
     if (io) {
-        io.emit('student:updated', data);
+        io.emit('personnel:updated', data);
     }
 };
 
 /**
- * Emit class update event
+ * Emit student update event (legacy)
+ */
+export const emitStudentUpdate = (data) => {
+    emitPersonnelUpdate(data);
+};
+
+/**
+ * Emit class update event (legacy)
  */
 export const emitClassUpdate = (data) => {
     if (io) {
-        io.emit('class:updated', data);
+        io.emit('department:updated', data);
     }
 };

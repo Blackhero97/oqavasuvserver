@@ -1,7 +1,6 @@
 import net from 'net';
 import { parseString } from 'xml2js';
 import Employee from './models/Employee.js';
-import Student from './models/Student.js';
 import Attendance from './models/Attendance.js';
 
 const ISUP_PORT = 5200;
@@ -56,23 +55,15 @@ async function processAttendanceEvent(eventData) {
         const dateStr = localTime.toISOString().split('T')[0];
         const timeStr = localTime.toISOString().split('T')[1].substring(0, 5);
 
-        // Find employee in database - check Student collection first, then Employee
-        let employee = await Student.findOne({ hikvisionEmployeeId: employeeNo });
-        let isStudent = false;
+        // Find employee in database
+        const employee = await Employee.findOne({ hikvisionEmployeeId: employeeNo });
 
         if (employee) {
-            isStudent = true;
-            console.log(`👨‍🎓 Found in Student collection: ${employee.name}`);
-        } else {
-            // Fallback to Employee collection
-            employee = await Employee.findOne({ hikvisionEmployeeId: employeeNo });
-            if (employee) {
-                console.log(`👤 Found in Employee collection: ${employee.name}`);
-            }
+            console.log(`👤 Found in Employee collection: ${employee.name}`);
         }
 
         if (!employee) {
-            console.warn(`⚠️  Employee/Student not found: ${employeeNo}`);
+            console.warn(`⚠️  Person not found: ${employeeNo}`);
             return;
         }
 
@@ -83,12 +74,12 @@ async function processAttendanceEvent(eventData) {
         });
 
         if (!attendance) {
-            // New check-in - use correct role based on collection
-            const role = isStudent ? 'student' : (employee.role || 'staff');
-            const department = employee.className || employee.department || 'Unknown';
+            // New check-in
+            const role = employee.role || 'staff';
+            const department = employee.department || 'Unknown';
 
             attendance = new Attendance({
-                employeeId: employee.employeeId || employee.studentId,
+                employeeId: employee.employeeId,
                 hikvisionEmployeeId: employee.hikvisionEmployeeId,
                 name: employee.name,
                 role: role,  // ← Fixed: use 'student' for students
@@ -105,8 +96,8 @@ async function processAttendanceEvent(eventData) {
             console.log(`✅ ${employee.name} (${role}) - CHECK IN at ${timeStr}`);
         } else {
             // ✅ Update role and department if they changed
-            const role = isStudent ? 'student' : (employee.role || 'staff');
-            const department = employee.className || employee.department || 'Unknown';
+            const role = employee.role || 'staff';
+            const department = employee.department || 'Unknown';
 
             if (attendance.role !== role || attendance.department !== department) {
                 attendance.role = role;
@@ -135,7 +126,7 @@ async function processAttendanceEvent(eventData) {
         console.log('💾 Attendance saved to database');
 
     } catch (error) {
-        console.error('❌ Error processing attendance:', error);
+        console.error('❌ Error processing personnel event:', error);
     }
 }
 

@@ -56,11 +56,11 @@ if (token) {
             const userName = user.first_name || user.username || 'Foydalanuvchi';
 
             let welcomeMsg = `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `🏛 *BM MAKTAB | CRM TIZIMI* 🏛\n`;
+            welcomeMsg += `💧 *O'ZSUVTA'MINOT AJ* 💧\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
             welcomeMsg += `Assalomu alaykum, *${userName}*!\n\n`;
-            welcomeMsg += `Ushbu bot orqali siz *BM Maktab* axborot tizimi tomonidan yuboriladigan rasmiy xabarnomalarni qabul qilib borasiz. Obuna muvaffaqiyatli amalga oshirildi.\n\n`;
+            welcomeMsg += `Ushbu bot orqali siz *O'zsuvta'minot AJ* axborot tizimi tomonidan yuboriladigan rasmiy xabarnomalarni qabul qilib borasiz. Obuna muvaffaqiyatli amalga oshirildi.\n\n`;
 
             welcomeMsg += `📊 *ASOSIY XIZMATLAR:* \n`;
             welcomeMsg += `• Kunlik davomat hisobotlari\n`;
@@ -70,7 +70,7 @@ if (token) {
             welcomeMsg += `──────────────────\n`;
             welcomeMsg += `✨ *Holat:* Tizim to'liq faoliyat yuritmoqda.\n`;
             welcomeMsg += `━━━━━━━━━━━━━━━━━━━━\n`;
-            welcomeMsg += `🤖 *Attendance Bot* | v2.0.2`;
+            welcomeMsg += `🤖 *Suv Ta'minot Bot* | v2.0.2`;
 
             bot.sendMessage(chatId, welcomeMsg, {
                 parse_mode: 'Markdown'
@@ -361,7 +361,7 @@ export const sendAttendanceReport = async (role = 'student') => {
         }
 
         message += `━━━━━━━━━━━━━━━━━━━━━\n`;
-        message += `🤖 *BM CRM Tizimi*\n`;
+        message += `🤖 *O'zsuvta'minot CRM*\n`;
         message += `📅 ${new Date().toLocaleDateString('uz-UZ', { timeZone: 'Asia/Tashkent', day: '2-digit', month: 'long', year: 'numeric' })}\n`;
         message += `🕐 ${new Date().toLocaleTimeString('uz-UZ', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' })}`;
 

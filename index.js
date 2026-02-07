@@ -20,6 +20,17 @@ import { initializeSocket } from "./services/socket.service.js";
 import { corsOptions } from "./config/cors.js";
 import { initializeScheduler } from "./services/scheduler.service.js";
 
+// Routes
+import webhookRoutes from "./webhookRoutes.js";
+import authRoutes from "./routes/auth.routes.js";
+import setupRoutes from "./routes/setup.routes.js";
+import reportsRoutes from "./routes/reports.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
+
+// Models
+import Employee from "./models/Employee.js";
+import Attendance from "./models/Attendance.js";
+
 console.log(`🔧 NODE_ENV: ${process.env.NODE_ENV}`);
 
 // Connect to MongoDB

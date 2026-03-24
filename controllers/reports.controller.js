@@ -37,7 +37,7 @@ export const getReportStats = async (req, res) => {
             if (parts.length < 2) return false;
             const h = parseInt(parts[0]);
             const m = parseInt(parts[1]);
-            return (h * 60 + m) > (8 * 60 + 30);
+            return (h * 60 + m) > (9 * 60 + 30);
         });
         const latePercentage = presentCount > 0 ? (lateRecords.length / presentCount) * 100 : 0;
 
@@ -48,7 +48,7 @@ export const getReportStats = async (req, res) => {
             if (!r.firstCheckIn) return false;
             const p = r.firstCheckIn.split(':');
             if (p.length < 2) return false;
-            return (parseInt(p[0]) * 60 + parseInt(p[1])) > (8 * 60 + 30);
+            return (parseInt(p[0]) * 60 + parseInt(p[1])) > (9 * 60 + 30);
         }).length;
         const absentToday = Math.max(0, (totalEmployees || 0) - presentToday);
 

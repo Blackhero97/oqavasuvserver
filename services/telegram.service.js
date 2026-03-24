@@ -130,7 +130,7 @@ export const sendAttendanceReport = async () => {
         const lateCount = records.filter(r => {
             if (!r.firstCheckIn) return false;
             const [h, m] = r.firstCheckIn.split(':').map(Number);
-            return (h * 60 + m) > (8 * 60 + 30);
+            return (h * 60 + m) > (9 * 60 + 30);
         }).length;
 
         const attendanceRate = total > 0 ? Math.round((presentCount / total) * 100) : 0;
@@ -163,7 +163,7 @@ export const sendAttendanceReport = async () => {
             sortedPresent.forEach((r, index) => {
                 const checkIn = r.firstCheckIn || '--:--';
                 const [h, m] = checkIn.split(':').map(Number);
-                const isLate = (h * 60 + m) > (8 * 60 + 30);
+                const isLate = (h * 60 + m) > (9 * 60 + 30);
                 message += `${index + 1}. *${r.name}* ${isLate ? '⏰' : '✅'}\n`;
                 message += `   └ Vaqt: \`${checkIn}\`\n`;
             });

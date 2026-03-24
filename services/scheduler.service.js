@@ -7,18 +7,18 @@ import { sendAttendanceReport } from './telegram.service.js';
 export const initializeScheduler = () => {
     console.log('⏰ Scheduler initialized');
 
-    // 1. Morning Report - 09:00 AM
-    cron.schedule('0 9 * * *', async () => {
-        console.log('🕒 Triggering Morning Attendance Report (09:00)...');
+    // 1. Morning Report - 10:00 AM
+    cron.schedule('0 10 * * *', async () => {
+        console.log('🕒 Triggering Morning Attendance Report (10:00)...');
         await sendAttendanceReport();
     }, {
         scheduled: true,
         timezone: "Asia/Tashkent"
     });
 
-    // 2. Evening Report - 05:00 PM (17:00)
-    cron.schedule('0 17 * * *', async () => {
-        console.log('🕒 Triggering Evening Attendance Report (17:00)...');
+    // 2. Evening Report - 09:00 PM (21:00)
+    cron.schedule('0 21 * * *', async () => {
+        console.log('🕒 Triggering Evening Attendance Report (21:00)...');
         await sendAttendanceReport();
     }, {
         scheduled: true,
